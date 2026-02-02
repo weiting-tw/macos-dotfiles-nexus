@@ -109,21 +109,39 @@ if [[ "$ICLOUD_ONLY" != true ]]; then
     # ===== Step 4: Initialize + Apply chezmoi =====
     log_title "Step 4: chezmoi init + apply"
 
-    if [[ -d "$HOME/.local/share/chezmoi" ]]; then
+    CHEZMOI_SRC="$HOME/.local/share/chezmoi"
+
+    if [[ -d "$CHEZMOI_SRC" ]]; then
         log_info "chezmoi 已初始化，執行 update..."
         chezmoi update
     else
         log_info "首次設定，初始化 chezmoi..."
-        # Clone repo 並指定 chezmoi/ 子目錄為 source
-        TEMP_CLONE="$(mktemp -d)"
-        git clone "$REPO_URL" "$TEMP_CLONE"
-        # 將 chezmoi 子目錄複製到 chezmoi source
-        CHEZMOI_SRC="$HOME/.local/share/chezmoi"
         mkdir -p "$CHEZMOI_SRC"
-        cp -a "$TEMP_CLONE/chezmoi/." "$CHEZMOI_SRC/"
-        rm -rf "$TEMP_CLONE"
+
+        # 判斷腳本是否在本地 repo 中執行
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+        LOCAL_CHEZMOI=""
+
+        # 情況 1: install.sh 在 chezmoi/ 目錄內（直接執行 repo 裡的 install.sh）
+        if [[ -f "$SCRIPT_DIR/.chezmoi.toml.tmpl" ]]; then
+            LOCAL_CHEZMOI="$SCRIPT_DIR"
+        # 情況 2: install.sh 在 repo 根目錄，chezmoi/ 是子目錄
+        elif [[ -d "$SCRIPT_DIR/chezmoi" && -f "$SCRIPT_DIR/chezmoi/.chezmoi.toml.tmpl" ]]; then
+            LOCAL_CHEZMOI="$SCRIPT_DIR/chezmoi"
+        fi
+
+        if [[ -n "$LOCAL_CHEZMOI" ]]; then
+            log_info "偵測到本地 repo: $LOCAL_CHEZMOI"
+            cp -a "$LOCAL_CHEZMOI/." "$CHEZMOI_SRC/"
+        else
+            log_info "從遠端 clone: $REPO_URL"
+            TEMP_CLONE="$(mktemp -d)"
+            git clone "$REPO_URL" "$TEMP_CLONE"
+            cp -a "$TEMP_CLONE/chezmoi/." "$CHEZMOI_SRC/"
+            rm -rf "$TEMP_CLONE"
+        fi
+
         chezmoi init --apply
-        # Note: chezmoi will prompt for email, name, is_work, machine_role
     fi
     log_ok "chezmoi 設定完成"
 fi
