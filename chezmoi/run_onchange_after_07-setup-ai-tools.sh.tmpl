@@ -1,0 +1,121 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Setup AI Coding Tools + iCloud sync
+set -euo pipefail
+
+ICLOUD_SHARED="{{ .icloud_dir }}"
+
+# ===== Create iCloud sync directory =====
+mkdir -p "$ICLOUD_SHARED"
+mkdir -p "$ICLOUD_SHARED"/{claude/{agents,skills},codex/skills,opencode/{agent,plugin,superpowers},vscode,iterm2}
+
+echo "✓ iCloud sync directory ready: $ICLOUD_SHARED"
+
+# ===== Detect + Install AI tools =====
+install_if_missing() {
+    local name="$1" check="$2" install_cmd="$3"
+    if command -v "$check" &>/dev/null || [[ -d "$check" ]]; then
+        echo "✓ $name already installed"
+    else
+        read -p "Install $name? [y/N] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            eval "$install_cmd"
+            echo "✓ $name installed"
+        else
+            echo "⊘ $name skipped"
+        fi
+    fi
+}
+
+install_if_missing "Cursor"      "/Applications/Cursor.app"    "brew install --cask cursor"
+install_if_missing "Windsurf"    "/Applications/Windsurf.app"  "brew install --cask windsurf"
+install_if_missing "Claude Code" "claude"                       "npm install -g @anthropic-ai/claude-code"
+install_if_missing "Codex"       "codex"                        "npm install -g @openai/codex"
+install_if_missing "OpenCode"    "opencode"                     "brew install opencode"
+
+# ===== iCloud Sync: Claude Code settings + agents =====
+# Claude Code settings.json → iCloud (non-sensitive, frequently changed)
+CLAUDE_DIR="$HOME/.claude"
+mkdir -p "$CLAUDE_DIR"
+
+# Sync agents from iCloud
+if [[ -d "$ICLOUD_SHARED/claude/agents" ]]; then
+    # Create symlink from ~/.claude/agents → iCloud
+    if [[ ! -L "$CLAUDE_DIR/agents" ]]; then
+        [[ -d "$CLAUDE_DIR/agents" ]] && mv "$CLAUDE_DIR/agents" "$CLAUDE_DIR/agents.backup.$(date +%s)"
+        ln -sf "$ICLOUD_SHARED/claude/agents" "$CLAUDE_DIR/agents"
+        echo "✓ Claude agents → iCloud symlink"
+    fi
+    if [[ ! -L "$CLAUDE_DIR/skills" ]]; then
+        [[ -d "$CLAUDE_DIR/skills" ]] && mv "$CLAUDE_DIR/skills" "$CLAUDE_DIR/skills.backup.$(date +%s)"
+        ln -sf "$ICLOUD_SHARED/claude/skills" "$CLAUDE_DIR/skills"
+        echo "✓ Claude skills → iCloud symlink"
+    fi
+fi
+
+# ===== iCloud Sync: Codex skills =====
+CODEX_DIR="$HOME/.codex"
+mkdir -p "$CODEX_DIR"
+if [[ -d "$ICLOUD_SHARED/codex/skills" ]]; then
+    if [[ ! -L "$CODEX_DIR/skills" ]]; then
+        [[ -d "$CODEX_DIR/skills" ]] && mv "$CODEX_DIR/skills" "$CODEX_DIR/skills.backup.$(date +%s)"
+        ln -sf "$ICLOUD_SHARED/codex/skills" "$CODEX_DIR/skills"
+        echo "✓ Codex skills → iCloud symlink"
+    fi
+fi
+
+# ===== iCloud Sync: OpenCode non-sensitive configs =====
+OPENCODE_DIR="$HOME/.config/opencode"
+mkdir -p "$OPENCODE_DIR"
+
+# oh-my-opencode.json → iCloud
+if [[ -d "$ICLOUD_SHARED/opencode" ]]; then
+    if [[ ! -L "$OPENCODE_DIR/oh-my-opencode.json" ]] && [[ -f "$ICLOUD_SHARED/opencode/oh-my-opencode.json" ]]; then
+        [[ -f "$OPENCODE_DIR/oh-my-opencode.json" ]] && mv "$OPENCODE_DIR/oh-my-opencode.json" "$OPENCODE_DIR/oh-my-opencode.json.backup.$(date +%s)"
+        ln -sf "$ICLOUD_SHARED/opencode/oh-my-opencode.json" "$OPENCODE_DIR/oh-my-opencode.json"
+    fi
+
+    # Agent directory → iCloud
+    if [[ ! -L "$OPENCODE_DIR/agent" ]]; then
+        [[ -d "$OPENCODE_DIR/agent" ]] && mv "$OPENCODE_DIR/agent" "$OPENCODE_DIR/agent.backup.$(date +%s)"
+        ln -sf "$ICLOUD_SHARED/opencode/agent" "$OPENCODE_DIR/agent"
+    fi
+
+    # Plugin directory → iCloud
+    if [[ ! -L "$OPENCODE_DIR/plugin" ]] && [[ -d "$ICLOUD_SHARED/opencode/plugin" ]]; then
+        [[ -d "$OPENCODE_DIR/plugin" ]] && mv "$OPENCODE_DIR/plugin" "$OPENCODE_DIR/plugin.backup.$(date +%s)"
+        ln -sf "$ICLOUD_SHARED/opencode/plugin" "$OPENCODE_DIR/plugin"
+    fi
+
+    # Superpowers directory → iCloud
+    if [[ ! -L "$OPENCODE_DIR/superpowers" ]] && [[ -d "$ICLOUD_SHARED/opencode/superpowers" ]]; then
+        [[ -d "$OPENCODE_DIR/superpowers" ]] && mv "$OPENCODE_DIR/superpowers" "$OPENCODE_DIR/superpowers.backup.$(date +%s)"
+        ln -sf "$ICLOUD_SHARED/opencode/superpowers" "$OPENCODE_DIR/superpowers"
+    fi
+fi
+
+# ===== OpenCode: Install plugin dependencies =====
+if command -v bun &>/dev/null && [[ -f "$OPENCODE_DIR/package.json" ]]; then
+    echo "Installing OpenCode plugin dependencies..."
+    cd "$OPENCODE_DIR" && bun install --frozen-lockfile 2>/dev/null || bun install
+    echo "✓ OpenCode plugin dependencies installed"
+fi
+
+# ===== iCloud Sync: VS Code extensions list =====
+if [[ -f "$ICLOUD_SHARED/vscode/extensions.txt" ]]; then
+    echo "✓ VS Code extensions list found in iCloud"
+fi
+
+# ===== Install VS Code extensions =====
+if command -v code &>/dev/null && [[ -f "$ICLOUD_SHARED/vscode/extensions.txt" ]]; then
+    echo "Installing VS Code extensions from iCloud..."
+    while IFS= read -r ext; do
+        [[ -z "$ext" || "$ext" == \#* ]] && continue
+        code --install-extension "$ext" --force 2>/dev/null || true
+    done < "$ICLOUD_SHARED/vscode/extensions.txt"
+    echo "✓ VS Code extensions installed"
+fi
+
+echo "✓ AI tools setup complete"
+{{ end -}}

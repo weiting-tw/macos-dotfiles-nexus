@@ -1,0 +1,29 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Setup Git multi-identity with includeIf
+
+set -euo pipefail
+
+# Ensure directories exist
+mkdir -p "$HOME/work" "$HOME/personal"
+
+echo "✓ Git identity directories ready (~/work, ~/personal)"
+
+{{- if .is_work }}
+# Link host-specific git identity files if they exist
+HOSTNAME=$(hostname -s)
+HOST_DIR="{{ .chezmoi.sourceDir }}/hosts/${HOSTNAME}"
+
+if [[ -f "${HOST_DIR}/.gitconfig-work" ]]; then
+    cp "${HOST_DIR}/.gitconfig-work" "$HOME/.gitconfig-work"
+    echo "✓ Work git identity linked"
+fi
+
+if [[ -f "${HOST_DIR}/.gitconfig-personal" ]]; then
+    cp "${HOST_DIR}/.gitconfig-personal" "$HOME/.gitconfig-personal"
+    echo "✓ Personal git identity linked"
+fi
+{{- end }}
+
+echo "✓ Git identity setup complete"
+{{ end -}}

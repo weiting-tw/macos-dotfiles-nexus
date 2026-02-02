@@ -1,0 +1,64 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Install Homebrew and packages (re-runs when this script changes)
+set -euo pipefail
+
+# ===== Install Homebrew =====
+if ! command -v brew &>/dev/null; then
+    echo "Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    # Setup PATH for Apple Silicon
+    if [[ -f "/opt/homebrew/bin/brew" ]]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    fi
+fi
+
+echo "✓ Homebrew ready"
+
+# ===== Base Brewfile =====
+brew bundle --file=/dev/stdin <<'BREWFILE'
+# CLI 工具
+brew "age"           # 加密工具
+brew "git"
+brew "git-lfs"
+brew "diff-so-fancy"
+brew "fzf"
+brew "ripgrep"
+brew "fd"
+brew "bat"
+brew "eza"
+brew "jq"
+brew "tree"
+brew "wget"
+brew "gpg"
+brew "gh"
+
+# 開發工具
+brew "node"
+brew "python"
+
+# Cask 應用
+cask "bitwarden"
+cask "iterm2"
+cask "visual-studio-code"
+
+# 字型
+cask "font-noto-sans-cjk-tc"
+cask "font-source-code-pro"
+BREWFILE
+
+echo "✓ Base packages installed"
+
+# ===== Host-specific Brewfile =====
+# Check if host-specific Brewfile exists in chezmoi source
+HOSTNAME=$(hostname -s)
+HOST_BREWFILE="{{ .chezmoi.sourceDir }}/hosts/${HOSTNAME}/Brewfile"
+if [[ -f "$HOST_BREWFILE" ]]; then
+    echo "Installing host-specific packages for ${HOSTNAME}..."
+    brew bundle --file="$HOST_BREWFILE"
+    echo "✓ Host-specific packages installed"
+fi
+
+echo "✓ All Homebrew packages installed"
+{{ end -}}

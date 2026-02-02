@@ -1,0 +1,30 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Setup SSH config + Bitwarden Agent + public keys
+
+set -euo pipefail
+
+# Ensure .ssh directory exists with correct permissions
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
+
+# Ensure controlmasters directory exists
+mkdir -p "$HOME/.ssh/controlmasters"
+
+# Set correct permissions on config
+[[ -f "$HOME/.ssh/config" ]] && chmod 600 "$HOME/.ssh/config"
+
+# Check Bitwarden SSH Agent
+BW_SOCK="$HOME/.bitwarden-ssh-agent.sock"
+if [[ -S "$BW_SOCK" ]]; then
+    echo "✓ Bitwarden SSH Agent detected"
+else
+    echo "⚠ Bitwarden SSH Agent not detected"
+    echo "  Please ensure:"
+    echo "  1. Bitwarden desktop app is open (official, not App Store)"
+    echo "  2. Settings > SSH Agent is enabled"
+    echo "  3. .zshrc has: export SSH_AUTH_SOCK=~/.bitwarden-ssh-agent.sock"
+fi
+
+echo "✓ SSH setup complete (private keys managed by Bitwarden SSH Agent)"
+{{ end -}}

@@ -1,0 +1,80 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Setup launchd agents for auto-sync
+set -euo pipefail
+
+LAUNCH_AGENTS="$HOME/Library/LaunchAgents"
+mkdir -p "$LAUNCH_AGENTS"
+
+# ===== chezmoi auto-update agent =====
+CHEZMOI_PLIST="$LAUNCH_AGENTS/com.user.chezmoi-update.plist"
+CHEZMOI_BIN="$(command -v chezmoi)"
+
+cat > "$CHEZMOI_PLIST" << PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.chezmoi-update</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>${CHEZMOI_BIN}</string>
+        <string>update</string>
+        <string>--no-tty</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>43200</integer>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/chezmoi-update.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/chezmoi-update.err.log</string>
+</dict>
+</plist>
+PLIST
+
+launchctl unload "$CHEZMOI_PLIST" 2>/dev/null || true
+launchctl load "$CHEZMOI_PLIST"
+echo "✓ chezmoi auto-update agent installed (every 12 hours)"
+
+# ===== iCloud capture agent =====
+ICLOUD_SYNC="{{ .chezmoi.sourceDir }}/scripts/icloud-sync.sh"
+if [[ -f "$ICLOUD_SYNC" ]]; then
+    ICLOUD_PLIST="$LAUNCH_AGENTS/com.user.icloud-capture.plist"
+
+    cat > "$ICLOUD_PLIST" << PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.icloud-capture</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>${ICLOUD_SYNC}</string>
+        <string>capture</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>21600</integer>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/icloud-capture.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/icloud-capture.err.log</string>
+</dict>
+</plist>
+PLIST
+
+    launchctl unload "$ICLOUD_PLIST" 2>/dev/null || true
+    launchctl load "$ICLOUD_PLIST"
+    echo "✓ iCloud capture agent installed (every 6 hours)"
+fi
+
+echo "✓ LaunchAgents setup complete"
+{{ end -}}

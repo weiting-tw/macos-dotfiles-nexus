@@ -1,0 +1,49 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Configure macOS defaults (re-runs when this script changes)
+# Re-runs automatically when this script content changes
+set -euo pipefail
+
+echo "Configuring macOS defaults..."
+
+# ===== Finder =====
+defaults write com.apple.finder ShowPathbar -bool true
+defaults write com.apple.finder ShowStatusBar -bool true
+defaults write com.apple.finder AppleShowAllFiles -bool true
+defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
+defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+
+# ===== Dock =====
+defaults write com.apple.dock autohide -bool true
+defaults write com.apple.dock tilesize -int 48
+defaults write com.apple.dock minimize-to-application -bool true
+defaults write com.apple.dock show-recents -bool false
+
+# ===== 鍵盤 =====
+defaults write NSGlobalDomain KeyRepeat -int 2
+defaults write NSGlobalDomain InitialKeyRepeat -int 15
+defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
+
+# ===== 截圖 =====
+mkdir -p "$HOME/Desktop/Screenshots"
+defaults write com.apple.screencapture location -string "$HOME/Desktop/Screenshots"
+defaults write com.apple.screencapture type -string "png"
+
+# ===== 觸控板 =====
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+
+# ===== iTerm2 → iCloud 同步 =====
+defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$HOME/Library/Mobile Documents/com~apple~CloudDocs/dotfiles-shared/iterm2"
+defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
+
+# ===== 其他 =====
+defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
+defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false
+
+# Restart affected apps
+killall Dock Finder SystemUIServer 2>/dev/null || true
+
+echo "✓ macOS defaults configured"
+{{ end -}}
