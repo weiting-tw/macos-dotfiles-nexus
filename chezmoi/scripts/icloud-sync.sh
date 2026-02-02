@@ -71,6 +71,12 @@ capture() {
         log_ok "VS Code extensions list → iCloud ($(wc -l < "$ICLOUD_DIR/vscode/extensions.txt" | tr -d ' ') extensions)"
     fi
 
+    # iTerm2 preferences
+    if [[ -f "$HOME/Library/Preferences/com.googlecode.iterm2.plist" ]]; then
+        cp "$HOME/Library/Preferences/com.googlecode.iterm2.plist" "$ICLOUD_DIR/iterm2/"
+        log_ok "iTerm2 preferences → iCloud"
+    fi
+
     # Brewfile snapshot
     if command -v brew &>/dev/null; then
         brew bundle dump --force --file="$ICLOUD_DIR/Brewfile.snapshot"
@@ -155,6 +161,13 @@ apply() {
         fi
     fi
 
+    # iTerm2 preferences (set native iCloud sync)
+    if [[ -d "$ICLOUD_DIR/iterm2" ]]; then
+        defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$ICLOUD_DIR/iterm2"
+        defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
+        log_ok "iTerm2 ← iCloud (native PrefsCustomFolder)"
+    fi
+
     # VS Code extensions
     if command -v code &>/dev/null && [[ -f "$ICLOUD_DIR/vscode/extensions.txt" ]]; then
         log_info "Installing VS Code extensions..."
@@ -210,6 +223,9 @@ status() {
     [[ -f "$ICLOUD_DIR/vscode/extensions.txt" ]] && \
         log_info "VS Code extensions.txt ($(wc -l < "$ICLOUD_DIR/vscode/extensions.txt" | tr -d ' ') extensions)"
 
+    [[ -f "$ICLOUD_DIR/iterm2/com.googlecode.iterm2.plist" ]] && \
+        log_info "iTerm2 plist ($(stat -f '%Sm' "$ICLOUD_DIR/iterm2/com.googlecode.iterm2.plist" 2>/dev/null || echo 'unknown'))"
+
     [[ -f "$ICLOUD_DIR/Brewfile.snapshot" ]] && \
         log_info "Brewfile.snapshot ($(stat -f '%Sm' "$ICLOUD_DIR/Brewfile.snapshot" 2>/dev/null || echo 'unknown'))"
 
@@ -256,6 +272,19 @@ status() {
         log_ok "~/.config/opencode/superpowers → iCloud"
     else
         log_warn "OpenCode superpowers (not symlinked)"
+    fi
+
+    # iTerm2 native sync (not symlink, uses PrefsCustomFolder)
+    local iterm_folder
+    iterm_folder="$(defaults read com.googlecode.iterm2 PrefsCustomFolder 2>/dev/null || echo '')"
+    local iterm_load
+    iterm_load="$(defaults read com.googlecode.iterm2 LoadPrefsFromCustomFolder 2>/dev/null || echo '0')"
+    if [[ "$iterm_load" == "1" && "$iterm_folder" == "$ICLOUD_DIR/iterm2" ]]; then
+        log_ok "iTerm2 → iCloud (native PrefsCustomFolder)"
+    elif [[ "$iterm_load" == "1" ]]; then
+        log_warn "iTerm2 PrefsCustomFolder 指向: $iterm_folder (預期: $ICLOUD_DIR/iterm2)"
+    else
+        log_warn "iTerm2 iCloud sync 未啟用"
     fi
 }
 
