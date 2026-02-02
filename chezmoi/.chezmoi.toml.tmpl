@@ -1,0 +1,10 @@
+{{- $email := promptStringOnce . "email" "Email (e.g. you@example.com)" -}}
+{{- $name := promptStringOnce . "name" "Full name" -}}
+{{- $is_work := promptBoolOnce . "is_work" "Is this a work machine" -}}
+
+[data]
+    email = {{ $email | quote }}
+    name = {{ $name | quote }}
+    is_work = {{ $is_work }}
+    hostname = {{ .chezmoi.hostname | quote }}
+    icloud_dir = {{ joinPath .chezmoi.homeDir "Library/Mobile Documents/com~apple~CloudDocs/dotfiles-shared" | quote }}

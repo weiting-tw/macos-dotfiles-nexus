@@ -1,0 +1,17 @@
+README.md
+LICENSE
+docs/
+scripts/
+*.md
+!dot_*
+.DS_Store
+
+# OpenCode 機器特定狀態（不同步）
+.config/opencode/antigravity-accounts.json
+.config/opencode/node_modules
+
+# OS-specific ignores
+{{- if ne .chezmoi.os "darwin" }}
+Library/
+.config/karabiner/
+{{- end }}

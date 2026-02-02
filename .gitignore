@@ -1,0 +1,31 @@
+# Worktrees
+.worktrees/
+
+# macOS
+.DS_Store
+
+# SSH（只追蹤 known_hosts 和 config）
+ssh/*
+!ssh/known_hosts
+!ssh/config
+!ssh/.gitkeep
+
+# 本地設定
+.dotfilesrc
+.sync.log
+
+# AI 工具認證（不同步）
+.claude/settings.local.json
+.codex/auth.json
+.codex/history.jsonl
+
+# 敏感環境變數
+.secrets
+
+# Template 渲染產出（不追蹤）
+ai/opencode/opencode.json
+ai/codex/config.toml
+ai/claude-desktop/claude_desktop_config.json
+
+# npmrc 渲染產出
+dotfiles/.npmrc

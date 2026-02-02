@@ -1,0 +1,11 @@
+# 預設值（可被 ~/.config/chezmoi/chezmoi.toml 覆寫）
+git:
+  signing_key: "GPG_KEY_REDACTED"
+  gpg_program: ""
+
+ssh:
+  bitwarden_agent_sock: "~/.bitwarden-ssh-agent.sock"
+  github_pubkey: "id_ed25519.pub"
+  gitlab_pubkey: "id_ed25519.pub"
+
+editor: "code"
