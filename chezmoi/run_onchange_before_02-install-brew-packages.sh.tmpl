@@ -16,9 +16,11 @@ fi
 
 echo "✓ Homebrew ready"
 
-# Cask 預設安裝到個人 ~/Applications
+{{- if .is_work }}
+# 公司機器：Cask 安裝到個人 ~/Applications（避免權限問題）
 mkdir -p "$HOME/Applications"
 export HOMEBREW_CASK_OPTS="--appdir=$HOME/Applications"
+{{- end }}
 
 # ===== Base Brewfile =====
 brew bundle --file=/dev/stdin <<'BREWFILE'
