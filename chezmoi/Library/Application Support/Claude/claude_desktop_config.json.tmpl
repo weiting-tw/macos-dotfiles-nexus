@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "perplexity-ask": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "server-perplexity-ask"
+      ],
+      "env": {
+        "PERPLEXITY_API_KEY": "{{ env "PERPLEXITY_API_KEY" }}"
+      }
+    },
+    "n8n-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "supergateway",
+        "--streamableHttp",
+        "https://n8n.weiting.me/mcp-server/http",
+        "--header",
+        "authorization:Bearer {{ env "N8N_MCP_TOKEN" }}"
+      ]
+    }
+  },
+  "preferences": {
+    "quickEntryDictationShortcut": "off"
+  }
+}

@@ -1,0 +1,71 @@
+preferred_auth_method = "chatgpt"
+forced_login_method = "chatgpt"
+
+profile="codex-max"
+# same as `--sandbox workspace-write`
+sandbox_mode = "danger-full-access" # "read-only" or "workspace-write" or "danger-full-access"
+approval_policy = "on-failure" # "untrusted" or "on-failure" or "never"
+
+[profiles.codex]
+model_provider = "azure"
+model = "gpt-5.1-codex"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles.codex-max]
+model_provider = "azure"
+model = "gpt-5.1-codex-max"
+model_reasoning_effort = "xhigh"
+model_reasoning_summary = "detailed"
+
+[profiles.gpt-5-mini]
+model_provider = "azure"
+model = "gpt-5-mini"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+max_tokens= 950
+
+[profiles.o4-mini]
+model_provider = "azure"
+model = "o4-mini"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles.o3]
+model_provider = "azure"
+model = "o3"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[model_providers.azure]
+name = "Azure"
+base_url= "https://wilbe-mfv8vy68-eastus2.cognitiveservices.azure.com/openai/"
+env_key = "OPENAI_API_KEY_app_mfv8vy68"
+
+# Newer versions appear to support the responses API, see https://github.com/openai/codex/pull/1321
+query_params = { api-version = "2025-04-01-preview" }
+wire_api = "responses"
+
+[sandbox_workspace_write]
+network_access = true
+
+## mcp
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp", "--api-key", "{{ env "CONTEXT7_API_KEY" }}"]
+
+[mcp_servers.gemini]
+command = "npx"
+args = ["-y", "gemini-mcp-tool@latest"]
+
+[notice]
+hide_gpt5_1_migration_prompt = true
+
+[notice.model_migrations]
+"gpt-5.1-codex-max" = "gpt-5.2-codex"
+"gpt-5.2" = "gpt-5.2-codex"

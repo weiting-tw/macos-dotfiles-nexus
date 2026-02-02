@@ -1,0 +1,159 @@
+{
+  "plugin": [
+    "oh-my-opencode",
+    "opencode-antigravity-auth",
+    "opencode-mystatus"
+  ],
+  "command": {
+    "mystatus": {
+      "description": "Query quota usage for all AI accounts",
+      "template": "Use the mystatus tool to query quota usage. Return the result as-is without modification."
+    }
+  },
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "edit": "allow"
+  },
+  "provider": {
+    "google": {
+      "models": {
+        "antigravity-gemini-3-pro-low": {
+          "name": "Gemini 3 Pro Low (Antigravity)",
+          "limit": { "context": 1048576, "output": 65535 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "antigravity-gemini-3-pro-high": {
+          "name": "Gemini 3 Pro High (Antigravity)",
+          "limit": { "context": 1048576, "output": 65535 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "antigravity-gemini-3-flash": {
+          "name": "Gemini 3 Flash (Antigravity)",
+          "limit": { "context": 1048576, "output": 65536 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "gemini-3-pro-low": {
+          "name": "Gemini 3 Pro Low (Antigravity)",
+          "limit": { "context": 1048576, "output": 65535 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "gemini-3-pro-high": {
+          "name": "Gemini 3 Pro High (Antigravity)",
+          "limit": { "context": 1048576, "output": 65535 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "gemini-3-flash": {
+          "name": "Gemini 3 Flash (Antigravity)",
+          "limit": { "context": 1048576, "output": 65536 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "antigravity-claude-sonnet-4-5": {
+          "name": "Claude Sonnet 4.5 (Antigravity)",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "antigravity-claude-sonnet-4-5-thinking-low": {
+          "name": "Claude Sonnet 4.5 Think Low (Antigravity)",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "antigravity-claude-sonnet-4-5-thinking-medium": {
+          "name": "Claude Sonnet 4.5 Think Medium (Antigravity)",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "antigravity-claude-sonnet-4-5-thinking-high": {
+          "name": "Claude Sonnet 4.5 Think High (Antigravity)",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "antigravity-claude-opus-4-5-thinking-low": {
+          "name": "Claude Opus 4.5 Think Low (Antigravity)",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "antigravity-claude-opus-4-5-thinking-medium": {
+          "name": "Claude Opus 4.5 Think Medium (Antigravity)",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "antigravity-claude-opus-4-5-thinking-high": {
+          "name": "Claude Opus 4.5 Think High (Antigravity)",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "gemini-2.5-flash": {
+          "name": "Gemini 2.5 Flash (CLI)",
+          "limit": { "context": 1048576, "output": 65536 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "gemini-2.5-pro": {
+          "name": "Gemini 2.5 Pro (CLI)",
+          "limit": { "context": 1048576, "output": 65536 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "gemini-3-flash-preview": {
+          "name": "Gemini 3 Flash Preview (CLI)",
+          "limit": { "context": 1048576, "output": 65536 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "gemini-3-pro-preview": {
+          "name": "Gemini 3 Pro Preview (CLI)",
+          "limit": { "context": 1048576, "output": 65535 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        }
+      }
+    },
+    "my-azure-lb": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Azure LB",
+      "options": {
+        "baseURL": "https://app-qwxr6ueos4e76.happysmoke-d0f21cfa.eastus.azurecontainerapps.io/openai/v1",
+        "headers": {
+          "Authorization": "Bearer {{ env "AZURE_LB_BEARER_TOKEN" }}"
+        }
+      },
+      "models": {
+        "gpt-5.2-codex": { "id": "gpt-5.2-codex" },
+        "gpt-5.1-codex": { "id": "gpt-5.1-codex" },
+        "gpt-5.1-codex-max": { "id": "gpt-5.1-codex-max" },
+        "gpt-5.1-codex-mini": { "id": "gpt-5.1-codex-mini", "options": { "useResponsesApi": true } },
+        "gpt-5.2": { "id": "gpt-5.2" },
+        "gpt-5-mini": { "id": "gpt-5-mini" }
+      }
+    }
+  },
+  "lsp": {},
+  "mcp": {
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "-y", "@playwright/mcp@latest"]
+    },
+    "gemini": {
+      "type": "local",
+      "command": ["npx", "-y", "gemini-mcp-tool@latest"]
+    },
+    "perplexity-ask": {
+      "type": "local",
+      "command": ["npx", "-y", "server-perplexity-ask"],
+      "environment": {
+        "PERPLEXITY_API_KEY": "{{ env "PERPLEXITY_API_KEY" }}"
+      }
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest"]
+    },
+    "context7": {
+      "type": "local",
+      "command": ["npx", "-y", "context7-mcp@latest"],
+      "environment": {
+        "CONTEXT7_API_KEY": "{{ env "CONTEXT7_API_KEY" }}"
+      }
+    },
+    "microsoft-learn": {
+      "type": "remote",
+      "url": "https://learn.microsoft.com/api/mcp"
+    }
+  }
+}
