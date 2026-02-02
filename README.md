@@ -26,8 +26,10 @@ chezmoi (Git)          iCloud Drive           Bitwarden
 ### 新機器
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/a26007565/settings/main/chezmoi/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/weiting-tw/settings/main/chezmoi/install.sh)
 ```
+
+install.sh 會自動偵測本地 repo，有則直接使用，無需 clone。
 
 安裝後設定 secrets：
 

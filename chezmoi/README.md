@@ -39,18 +39,20 @@
 
 ```bash
 # 方法 1：直接執行（推薦）
-bash <(curl -fsSL https://raw.githubusercontent.com/a26007565/settings/main/chezmoi/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/weiting-tw/settings/main/chezmoi/install.sh)
 
 # 方法 2：先 clone 再執行
-git clone https://github.com/a26007565/settings.git
+git clone https://github.com/weiting-tw/settings.git
 cd settings/chezmoi
 bash install.sh
 ```
 
+install.sh 會自動偵測本地 repo，有則直接使用，無需 clone。
+
 安裝過程會互動式詢問：
 - Email 地址
 - 全名
-- 是否為工作機器
+- 是否為工作機器（公司機器 cask 安裝到 ~/Applications）
 
 ### 已有設定的機器更新
 
@@ -67,7 +69,7 @@ chezmoi/                          # chezmoi source directory
 ├── .chezmoiignore                # 忽略清單
 ├── .chezmoiexternal.toml         # 外部資源（Antidote）
 │
-├── dot_zshrc                     # → ~/.zshrc
+├── dot_zshrc.tmpl                # → ~/.zshrc
 ├── dot_zsh_plugins.txt           # → ~/.zsh_plugins.txt
 ├── dot_gitconfig.tmpl            # → ~/.gitconfig（含 Go template）
 ├── dot_bash_profile              # → ~/.bash_profile
@@ -132,7 +134,7 @@ chezmoi/                          # chezmoi source directory
 
 | 檔案 | 目標路徑 | 說明 |
 |------|---------|------|
-| dot_zshrc | ~/.zshrc | Shell 設定 |
+| dot_zshrc.tmpl | ~/.zshrc | Shell 設定（template: is_work 條件 Homebrew appdir） |
 | dot_gitconfig.tmpl | ~/.gitconfig | Git 設定（template 注入 name/email） |
 | dot_editorconfig | ~/.editorconfig | 編輯器格式設定 |
 | private_dot_ssh/config.tmpl | ~/.ssh/config | SSH config（template 注入 key 路徑） |
@@ -294,7 +296,7 @@ icloud-sync.sh apply        # 套用 iCloud 變更
 # 1. Fork 此 repo
 # 2. 修改 .chezmoidata.yaml 的預設值
 # 3. 在新機器執行：
-chezmoi init --apply https://github.com/YOUR_USERNAME/settings.git
+chezmoi init --apply https://github.com/weiting-tw/settings.git
 ```
 
 ### 方法 3：只共用部分設定
@@ -375,13 +377,17 @@ ls -la ~/.config/opencode/oh-my-opencode.json
 ### Bitwarden SSH Agent 未偵測到
 
 ```bash
-# 檢查 socket
+# 檢查 socket（直接或 container 路徑）
 ls -la ~/.bitwarden-ssh-agent.sock
+ls -la ~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock
+
+# 如果在 container 路徑找到但 ~ 下沒有，建立 symlink：
+ln -sf ~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock ~/.bitwarden-ssh-agent.sock
 
 # 確認 Bitwarden 設定
-# 1. 開啟 Bitwarden 桌面版（官網版，非 App Store）
+# 1. 開啟 Bitwarden 桌面版（官網版或 App Store 版皆可）
 # 2. Settings > SSH Agent > Enable
-# 3. 重啟 Bitwarden
+# 3. 解鎖 Bitwarden
 ```
 
 ### LaunchAgent 未執行

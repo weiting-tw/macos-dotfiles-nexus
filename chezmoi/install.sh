@@ -25,7 +25,7 @@ log_title() { echo -e "\n${BOLD}$1${NC}"; }
 # ===== 參數解析 =====
 CHEZMOI_ONLY=false
 ICLOUD_ONLY=false
-REPO_URL="${DOTFILES_REPO:-https://github.com/a26007565/settings.git}"
+REPO_URL="${DOTFILES_REPO:-https://github.com/weiting-tw/settings.git}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
