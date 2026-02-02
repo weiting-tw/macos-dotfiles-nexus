@@ -14,16 +14,23 @@ mkdir -p "$HOME/.ssh/controlmasters"
 # Set correct permissions on config
 [[ -f "$HOME/.ssh/config" ]] && chmod 600 "$HOME/.ssh/config"
 
-# Check Bitwarden SSH Agent
+# Bitwarden SSH Agent — macOS container 版本 socket 路徑不同，需要 symlink
 BW_SOCK="$HOME/.bitwarden-ssh-agent.sock"
+BW_CONTAINER_SOCK="$HOME/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock"
+
 if [[ -S "$BW_SOCK" ]]; then
     echo "✓ Bitwarden SSH Agent detected"
+elif [[ -S "$BW_CONTAINER_SOCK" ]]; then
+    echo "ℹ Bitwarden SSH Agent found in container path, creating symlink..."
+    ln -sf "$BW_CONTAINER_SOCK" "$BW_SOCK"
+    echo "✓ Bitwarden SSH Agent symlinked"
 else
     echo "⚠ Bitwarden SSH Agent not detected"
     echo "  Please ensure:"
-    echo "  1. Bitwarden desktop app is open (official, not App Store)"
+    echo "  1. Bitwarden desktop app is open and unlocked"
     echo "  2. Settings > SSH Agent is enabled"
-    echo "  3. .zshrc has: export SSH_AUTH_SOCK=~/.bitwarden-ssh-agent.sock"
+    echo "  3. If using App Store version, socket is at:"
+    echo "     ~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock"
 fi
 
 echo "✓ SSH setup complete (private keys managed by Bitwarden SSH Agent)"
