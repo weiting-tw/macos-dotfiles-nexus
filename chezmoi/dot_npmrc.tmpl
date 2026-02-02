@@ -1,0 +1,4 @@
+{{- if env "NPM_AUTH_TOKEN" }}
+//registry.npmjs.org/:_authToken={{ env "NPM_AUTH_TOKEN" }}
+{{ end -}}
+registry=https://registry.npmjs.org/

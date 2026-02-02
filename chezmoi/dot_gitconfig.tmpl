@@ -1,0 +1,67 @@
+{{- $bcomp := "/usr/local/bin/bcomp" -}}
+{{- if stat "/opt/homebrew/bin/bcomp" -}}
+{{-   $bcomp = "/opt/homebrew/bin/bcomp" -}}
+{{- end -}}
+[core]
+	excludesfile = ~/.gitignore
+	autocrlf = input
+    filemode = false
+[difftool "sourceTree"]
+    cmd = {{ $bcomp }} \"$LOCAL\" \"$REMOTE\"
+    path =
+[mergetool "sourceTree"]
+    cmd = {{ $bcomp }} \"$LOCAL\" \"$REMOTE\" \"$BASE\" \"$MERGED\"
+[difftool "bc4"]
+    cmd = {{ $bcomp }} \"$LOCAL\" \"$REMOTE\"
+[mergetool "bc4"]
+    cmd = {{ $bcomp }} \"$LOCAL\" \"$REMOTE\" \"$BASE\" \"$MERGED\"
+    trustExitCode = true
+[merge]
+    tool = bc4
+[diff]
+    tool = bc4
+[difftool]
+    prompt = false
+[mergetool]
+    prompt = false
+    keepBackup = false
+[user]
+    name = {{ .name }}
+    email = {{ .email }}
+    signingKey = {{ .git.signing_key }}
+[alias]
+    hide = update-index --assume-unchanged
+    unhide = update-index --no-assume-unchanged
+[filter "lfs"]
+    clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
+    process = git-lfs filter-process
+    required = true
+[pager]
+    diff = diff-so-fancy | less --tabs=1,5 -RFX
+    show = diff-so-fancy | less --tabs=1,5 -RFX
+[gpg]
+{{- if .git.gpg_program }}
+    program = {{ .git.gpg_program }}
+{{- else }}
+    program = {{ if stat "/opt/homebrew/bin/gpg" }}/opt/homebrew/bin/gpg{{ else }}/usr/local/bin/gpg{{ end }}
+{{- end }}
+[commit]
+    gpgsign = true
+[tag]
+    forceSignAnnotated = false
+[url "https://git.gss.com.tw/"]
+	insteadOf = git@git.gss.com.tw:
+[color]
+	diff = auto
+	status = auto
+	branch = auto
+[pull]
+	rebase = true
+{{- if .is_work }}
+
+[includeIf "gitdir:~/work/"]
+    path = ~/.gitconfig-work
+[includeIf "gitdir:~/personal/"]
+    path = ~/.gitconfig-personal
+{{- end }}
