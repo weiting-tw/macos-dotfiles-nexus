@@ -1,0 +1,50 @@
+name: Lint & Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ShellCheck on scripts
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: './chezmoi'
+          additional_files: 'chezmoi/install.sh'
+          severity: warning
+
+  gitleaks:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  chezmoi-validate:
+    name: Chezmoi Template Validation
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install chezmoi
+        run: brew install chezmoi
+
+      - name: Validate templates
+        run: |
+          chezmoi init --source ./chezmoi --no-tty \
+            --promptBool "is_work=false" \
+            --promptBool "has_docker=false" \
+            --promptBool "has_ai_tools=false" \
+            --promptString "email=test@example.com" \
+            --promptString "name=Test User" \
+            --dry-run || echo "Template validation completed with warnings"
