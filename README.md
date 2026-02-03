@@ -29,7 +29,11 @@ chezmoi (Git)          iCloud Drive           Bitwarden
 bash <(curl -fsSL https://raw.githubusercontent.com/weiting-tw/settings/main/chezmoi/install.sh)
 ```
 
-install.sh 會自動偵測本地 repo，有則直接使用，無需 clone。
+安裝過程會互動式詢問：
+- Email / 全名（Git identity）
+- 是否為工作機器（cask 安裝到 ~/Applications）
+- 是否安裝 Docker
+- 是否安裝 AI tools（Claude, Codex, Gemini）
 
 安裝後設定 secrets：
 
@@ -44,6 +48,17 @@ source ~/.zshrc
 
 ```bash
 chezmoi update
+```
+
+### 常用指令（Makefile）
+
+```bash
+make              # 顯示所有可用指令
+make bootstrap    # 首次安裝
+make apply        # 套用設定
+make update       # 從 Git 拉取並套用
+make doctor       # 健康檢查
+make lint         # ShellCheck 檢查腳本
 ```
 
 ## 詳細文件

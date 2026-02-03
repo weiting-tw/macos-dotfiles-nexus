@@ -53,11 +53,28 @@ install.sh 會自動偵測本地 repo，有則直接使用，無需 clone。
 - Email 地址
 - 全名
 - 是否為工作機器（公司機器 cask 安裝到 ~/Applications）
+- 是否安裝 Docker
+- 是否安裝 AI tools（Claude, Codex, Gemini）
 
 ### 已有設定的機器更新
 
 ```bash
 chezmoi update    # 從 Git 拉取 + 套用
+```
+
+### 常用指令（Makefile）
+
+```bash
+make              # 顯示所有可用指令
+make bootstrap    # 首次安裝（完整設定）
+make apply        # 套用 chezmoi 設定到本機
+make update       # 從 Git 拉取最新設定並套用
+make diff         # 顯示本機與 chezmoi 設定差異
+make doctor       # 檢查 chezmoi 健康狀態
+make lint         # 執行 shellcheck 檢查腳本
+make icloud-capture   # 本地設定 → iCloud
+make icloud-apply     # iCloud 設定 → 本地
+make icloud-status    # 顯示 iCloud 同步狀態
 ```
 
 ## 目錄結構
@@ -107,12 +124,13 @@ chezmoi/                          # chezmoi source directory
 │           └── claude_desktop_config.json.tmpl  # Claude Desktop MCP config
 │
 ├── run_once_before_01-install-xcode-tools.sh           # Xcode CLI Tools
-├── run_onchange_before_02-install-brew-packages.sh.tmpl # Homebrew + Brewfile
+├── run_onchange_before_02-install-brew-packages.sh.tmpl # Homebrew + Brewfile + mise
+├── run_onchange_before_03-install-npm-packages.sh.tmpl  # npm 全域套件
 ├── run_once_after_04-setup-git-identity.sh.tmpl         # Git includeIf
 ├── run_once_after_05-setup-ssh.sh.tmpl                  # SSH + Bitwarden
 ├── run_onchange_after_06-configure-macos.sh.tmpl        # macOS defaults
-├── run_onchange_after_07-setup-ai-tools.sh.tmpl         # AI tools + iCloud
-├── run_once_after_09-setup-launchd.sh.tmpl              # Auto-sync agents
+├── run_onchange_after_07-setup-ai-tools.sh.tmpl         # AI tools + iCloud（需 has_ai_tools）
+├── run_once_after_09-setup-launchd.sh.tmpl              # Auto-sync agents（含失敗通知）
 │
 ├── scripts/                      # 輔助腳本（不被 chezmoi apply）
 │   ├── icloud-sync.sh            # iCloud 雙向同步
@@ -431,12 +449,29 @@ chezmoi edit-config-template
 vim "$(chezmoi source-path)/.chezmoidata.yaml"
 ```
 
-### 加密敏感檔案
+### Feature Flags
+
+chezmoi init 時會詢問 feature flags，控制可選功能：
+
+| Flag | 預設 | 作用 |
+|------|------|------|
+| `is_work` | false | 公司機器 cask 安裝到 ~/Applications |
+| `has_docker` | false | 安裝 Docker |
+| `has_ai_tools` | true | 安裝 AI tools（Claude, Codex, Gemini）+ iCloud 同步 |
+
+修改 flag：
+```bash
+chezmoi init   # 重新回答問題
+# 或直接編輯 ~/.config/chezmoi/chezmoi.toml
+```
+
+### 語言版本管理（mise）
+
+使用 [mise](https://mise.jdx.dev/) 管理語言版本（.tool-versions 格式）：
 
 ```bash
-# 使用 age 加密
-chezmoi add --encrypt ~/.ssh/id_rsa
-# 產生 encrypted_private_dot_ssh/private_id_rsa.age
+mise install          # 安裝 .tool-versions 指定的版本
+mise use python@3.13  # 設定 Python 版本
 ```
 
 ### 新增 run script
