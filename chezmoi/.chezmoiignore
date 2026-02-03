@@ -6,6 +6,11 @@ scripts/
 !dot_*
 .DS_Store
 
+# SSH 動態檔案（不同步）
+.ssh/known_hosts
+.ssh/known_hosts.old
+.ssh/config.d/*
+
 # OpenCode 機器特定狀態（不同步）
 .config/opencode/antigravity-accounts.json
 .config/opencode/node_modules
