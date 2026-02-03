@@ -103,12 +103,12 @@
           "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
         }
       }
-    },
+    }{{- if and (env "AZURE_LB_ENDPOINT") (env "AZURE_LB_BEARER_TOKEN") }},
     "my-azure-lb": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Azure LB",
       "options": {
-        "baseURL": "https://app-qwxr6ueos4e76.happysmoke-d0f21cfa.eastus.azurecontainerapps.io/openai/v1",
+        "baseURL": "{{ env "AZURE_LB_ENDPOINT" }}",
         "headers": {
           "Authorization": "Bearer {{ env "AZURE_LB_BEARER_TOKEN" }}"
         }
@@ -121,7 +121,7 @@
         "gpt-5.2": { "id": "gpt-5.2" },
         "gpt-5-mini": { "id": "gpt-5-mini" }
       }
-    }
+    }{{- end }}
   },
   "lsp": {},
   "mcp": {

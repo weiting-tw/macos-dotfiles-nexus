@@ -1,6 +1,6 @@
 # 預設值（可被 ~/.config/chezmoi/chezmoi.toml 覆寫）
 git:
-  signing_key: "GPG_KEY_REDACTED"
+  signing_key: ""  # 從環境變數 GPG_SIGNING_KEY 讀取
   gpg_program: ""
 
 ssh:

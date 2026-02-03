@@ -1,6 +1,6 @@
 #!/bin/bash
 # iCloud 雙向同步腳本
-# 用法: icloud-sync.sh [capture|apply|status]
+# 用法: icloud-sync.sh [capture|apply|diff|status] [options]
 set -euo pipefail
 
 # ===== flock 防止並發執行 =====
@@ -36,13 +36,61 @@ check_icloud_ready() {
     return 0
 }
 
+# ===== 衝突檢查 =====
+check_conflict() {
+    local local_path="$1"
+    local icloud_path="$2"
+    local name="$3"
+
+    if [[ ! -e "$local_path" ]] || [[ -L "$local_path" ]]; then
+        return 0  # 本地不存在或已是 symlink，無衝突
+    fi
+
+    if [[ ! -e "$icloud_path" ]]; then
+        return 0  # iCloud 不存在，無衝突
+    fi
+
+    local local_mtime icloud_mtime
+    local_mtime=$(stat -f '%m' "$local_path" 2>/dev/null || echo 0)
+    icloud_mtime=$(stat -f '%m' "$icloud_path" 2>/dev/null || echo 0)
+
+    if [[ "$icloud_mtime" -gt "$local_mtime" ]]; then
+        log_warn "衝突: $name iCloud 版本較新 (iCloud: $(date -r "$icloud_mtime" '+%Y-%m-%d %H:%M'), 本地: $(date -r "$local_mtime" '+%Y-%m-%d %H:%M'))"
+        log_warn "使用 --force 強制覆蓋，或先執行 'apply' 同步 iCloud 版本"
+        return 1
+    fi
+    return 0
+}
+
 # ===== Capture: 本地 → iCloud =====
 capture() {
+    local force=false
+    [[ "${1:-}" == "--force" ]] && force=true
+
     log_info "Capturing local configs to iCloud..."
     if ! check_icloud_ready; then
         log_warn "iCloud 未就緒，跳過 capture"
         exit 1
     fi
+
+    # 衝突檢查（除非 --force）
+    if [[ "$force" != "true" ]]; then
+        local has_conflict=false
+        check_conflict "$HOME/.claude/agents" "$ICLOUD_DIR/claude/agents" "Claude agents" || has_conflict=true
+        check_conflict "$HOME/.claude/skills" "$ICLOUD_DIR/claude/skills" "Claude skills" || has_conflict=true
+        check_conflict "$HOME/.codex/skills" "$ICLOUD_DIR/codex/skills" "Codex skills" || has_conflict=true
+        check_conflict "$HOME/.claude/settings.json" "$ICLOUD_DIR/claude/settings.json" "Claude settings.json" || has_conflict=true
+        check_conflict "$HOME/.config/opencode/oh-my-opencode.json" "$ICLOUD_DIR/opencode/oh-my-opencode.json" "OpenCode config" || has_conflict=true
+        check_conflict "$HOME/.config/opencode/agent" "$ICLOUD_DIR/opencode/agent" "OpenCode agents" || has_conflict=true
+        check_conflict "$HOME/.config/opencode/plugin" "$ICLOUD_DIR/opencode/plugin" "OpenCode plugin" || has_conflict=true
+        check_conflict "$HOME/.config/opencode/superpowers" "$ICLOUD_DIR/opencode/superpowers" "OpenCode superpowers" || has_conflict=true
+
+        if [[ "$has_conflict" == "true" ]]; then
+            log_warn "發現衝突，capture 中止"
+            exit 1
+        fi
+    fi
+
     mkdir -p "$ICLOUD_DIR"/{claude/{agents,skills},codex/skills,opencode/{agent,plugin,superpowers},vscode,iterm2}
 
     # Claude Code agents
@@ -113,7 +161,14 @@ capture() {
 
 # ===== Apply: iCloud → 本地 =====
 apply() {
-    log_info "Applying iCloud configs to local..."
+    local dry_run=false
+    [[ "${1:-}" == "-n" || "${1:-}" == "--dry-run" ]] && dry_run=true
+
+    if [[ "$dry_run" == "true" ]]; then
+        log_info "[DRY-RUN] Would apply iCloud configs to local..."
+    else
+        log_info "Applying iCloud configs to local..."
+    fi
 
     if ! check_icloud_ready; then
         log_warn "iCloud 未就緒，跳過 apply"
@@ -123,11 +178,20 @@ apply() {
 
     # Claude agents (create symlink)
     if [[ -d "$ICLOUD_DIR/claude/agents" ]]; then
-        mkdir -p "$HOME/.claude"
+        if [[ "$dry_run" == "true" ]]; then
+            log_info "[DRY-RUN] Would create directory: ~/.claude"
+        else
+            mkdir -p "$HOME/.claude"
+        fi
         if [[ ! -L "$HOME/.claude/agents" ]]; then
-            [[ -d "$HOME/.claude/agents" ]] && mv "$HOME/.claude/agents" "$HOME/.claude/agents.backup.$(date +%s)"
-            ln -sf "$ICLOUD_DIR/claude/agents" "$HOME/.claude/agents"
-            log_ok "Claude agents ← iCloud (symlinked)"
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -d "$HOME/.claude/agents" ]] && log_info "[DRY-RUN] Would backup: ~/.claude/agents → ~/.claude/agents.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.claude/agents → $ICLOUD_DIR/claude/agents"
+            else
+                [[ -d "$HOME/.claude/agents" ]] && mv "$HOME/.claude/agents" "$HOME/.claude/agents.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/claude/agents" "$HOME/.claude/agents"
+                log_ok "Claude agents ← iCloud (symlinked)"
+            fi
         else
             log_ok "Claude agents already symlinked"
         fi
@@ -135,11 +199,20 @@ apply() {
 
     # Claude skills (create symlink)
     if [[ -d "$ICLOUD_DIR/claude/skills" ]]; then
-        mkdir -p "$HOME/.claude"
+        if [[ "$dry_run" == "true" ]]; then
+            log_info "[DRY-RUN] Would create directory: ~/.claude"
+        else
+            mkdir -p "$HOME/.claude"
+        fi
         if [[ ! -L "$HOME/.claude/skills" ]]; then
-            [[ -d "$HOME/.claude/skills" ]] && mv "$HOME/.claude/skills" "$HOME/.claude/skills.backup.$(date +%s)"
-            ln -sf "$ICLOUD_DIR/claude/skills" "$HOME/.claude/skills"
-            log_ok "Claude skills ← iCloud (symlinked)"
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -d "$HOME/.claude/skills" ]] && log_info "[DRY-RUN] Would backup: ~/.claude/skills → ~/.claude/skills.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.claude/skills → $ICLOUD_DIR/claude/skills"
+            else
+                [[ -d "$HOME/.claude/skills" ]] && mv "$HOME/.claude/skills" "$HOME/.claude/skills.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/claude/skills" "$HOME/.claude/skills"
+                log_ok "Claude skills ← iCloud (symlinked)"
+            fi
         else
             log_ok "Claude skills already symlinked"
         fi
@@ -147,11 +220,20 @@ apply() {
 
     # Codex skills (create symlink)
     if [[ -d "$ICLOUD_DIR/codex/skills" ]]; then
-        mkdir -p "$HOME/.codex"
+        if [[ "$dry_run" == "true" ]]; then
+            log_info "[DRY-RUN] Would create directory: ~/.codex"
+        else
+            mkdir -p "$HOME/.codex"
+        fi
         if [[ ! -L "$HOME/.codex/skills" ]]; then
-            [[ -d "$HOME/.codex/skills" ]] && mv "$HOME/.codex/skills" "$HOME/.codex/skills.backup.$(date +%s)"
-            ln -sf "$ICLOUD_DIR/codex/skills" "$HOME/.codex/skills"
-            log_ok "Codex skills ← iCloud (symlinked)"
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -d "$HOME/.codex/skills" ]] && log_info "[DRY-RUN] Would backup: ~/.codex/skills → ~/.codex/skills.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.codex/skills → $ICLOUD_DIR/codex/skills"
+            else
+                [[ -d "$HOME/.codex/skills" ]] && mv "$HOME/.codex/skills" "$HOME/.codex/skills.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/codex/skills" "$HOME/.codex/skills"
+                log_ok "Codex skills ← iCloud (symlinked)"
+            fi
         else
             log_ok "Codex skills already symlinked"
         fi
@@ -159,51 +241,210 @@ apply() {
 
     # OpenCode (create symlinks)
     if [[ -d "$ICLOUD_DIR/opencode" ]]; then
-        mkdir -p "$HOME/.config/opencode"
+        if [[ "$dry_run" == "true" ]]; then
+            log_info "[DRY-RUN] Would create directory: ~/.config/opencode"
+        else
+            mkdir -p "$HOME/.config/opencode"
+        fi
 
         if [[ -f "$ICLOUD_DIR/opencode/oh-my-opencode.json" ]] && [[ ! -L "$HOME/.config/opencode/oh-my-opencode.json" ]]; then
-            [[ -f "$HOME/.config/opencode/oh-my-opencode.json" ]] && mv "$HOME/.config/opencode/oh-my-opencode.json" "$HOME/.config/opencode/oh-my-opencode.json.backup.$(date +%s)"
-            ln -sf "$ICLOUD_DIR/opencode/oh-my-opencode.json" "$HOME/.config/opencode/oh-my-opencode.json"
-            log_ok "OpenCode config ← iCloud (symlinked)"
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -f "$HOME/.config/opencode/oh-my-opencode.json" ]] && log_info "[DRY-RUN] Would backup: oh-my-opencode.json → oh-my-opencode.json.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.config/opencode/oh-my-opencode.json → $ICLOUD_DIR/opencode/oh-my-opencode.json"
+            else
+                [[ -f "$HOME/.config/opencode/oh-my-opencode.json" ]] && mv "$HOME/.config/opencode/oh-my-opencode.json" "$HOME/.config/opencode/oh-my-opencode.json.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/opencode/oh-my-opencode.json" "$HOME/.config/opencode/oh-my-opencode.json"
+                log_ok "OpenCode config ← iCloud (symlinked)"
+            fi
         fi
 
         if [[ -d "$ICLOUD_DIR/opencode/agent" ]] && [[ ! -L "$HOME/.config/opencode/agent" ]]; then
-            [[ -d "$HOME/.config/opencode/agent" ]] && mv "$HOME/.config/opencode/agent" "$HOME/.config/opencode/agent.backup.$(date +%s)"
-            ln -sf "$ICLOUD_DIR/opencode/agent" "$HOME/.config/opencode/agent"
-            log_ok "OpenCode agents ← iCloud (symlinked)"
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -d "$HOME/.config/opencode/agent" ]] && log_info "[DRY-RUN] Would backup: agent/ → agent.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.config/opencode/agent → $ICLOUD_DIR/opencode/agent"
+            else
+                [[ -d "$HOME/.config/opencode/agent" ]] && mv "$HOME/.config/opencode/agent" "$HOME/.config/opencode/agent.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/opencode/agent" "$HOME/.config/opencode/agent"
+                log_ok "OpenCode agents ← iCloud (symlinked)"
+            fi
         fi
 
         if [[ -d "$ICLOUD_DIR/opencode/plugin" ]] && [[ ! -L "$HOME/.config/opencode/plugin" ]]; then
-            [[ -d "$HOME/.config/opencode/plugin" ]] && mv "$HOME/.config/opencode/plugin" "$HOME/.config/opencode/plugin.backup.$(date +%s)"
-            ln -sf "$ICLOUD_DIR/opencode/plugin" "$HOME/.config/opencode/plugin"
-            log_ok "OpenCode plugin ← iCloud (symlinked)"
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -d "$HOME/.config/opencode/plugin" ]] && log_info "[DRY-RUN] Would backup: plugin/ → plugin.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.config/opencode/plugin → $ICLOUD_DIR/opencode/plugin"
+            else
+                [[ -d "$HOME/.config/opencode/plugin" ]] && mv "$HOME/.config/opencode/plugin" "$HOME/.config/opencode/plugin.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/opencode/plugin" "$HOME/.config/opencode/plugin"
+                log_ok "OpenCode plugin ← iCloud (symlinked)"
+            fi
         fi
 
         if [[ -d "$ICLOUD_DIR/opencode/superpowers" ]] && [[ ! -L "$HOME/.config/opencode/superpowers" ]]; then
-            [[ -d "$HOME/.config/opencode/superpowers" ]] && mv "$HOME/.config/opencode/superpowers" "$HOME/.config/opencode/superpowers.backup.$(date +%s)"
-            ln -sf "$ICLOUD_DIR/opencode/superpowers" "$HOME/.config/opencode/superpowers"
-            log_ok "OpenCode superpowers ← iCloud (symlinked)"
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -d "$HOME/.config/opencode/superpowers" ]] && log_info "[DRY-RUN] Would backup: superpowers/ → superpowers.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.config/opencode/superpowers → $ICLOUD_DIR/opencode/superpowers"
+            else
+                [[ -d "$HOME/.config/opencode/superpowers" ]] && mv "$HOME/.config/opencode/superpowers" "$HOME/.config/opencode/superpowers.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/opencode/superpowers" "$HOME/.config/opencode/superpowers"
+                log_ok "OpenCode superpowers ← iCloud (symlinked)"
+            fi
         fi
     fi
 
     # iTerm2 preferences (set native iCloud sync)
     if [[ -d "$ICLOUD_DIR/iterm2" ]]; then
-        defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$ICLOUD_DIR/iterm2"
-        defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
-        log_ok "iTerm2 ← iCloud (native PrefsCustomFolder)"
+        if [[ "$dry_run" == "true" ]]; then
+            log_info "[DRY-RUN] Would configure iTerm2 PrefsCustomFolder: $ICLOUD_DIR/iterm2"
+        else
+            defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$ICLOUD_DIR/iterm2"
+            defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
+            log_ok "iTerm2 ← iCloud (native PrefsCustomFolder)"
+        fi
     fi
 
     # VS Code extensions
     if command -v code &>/dev/null && [[ -f "$ICLOUD_DIR/vscode/extensions.txt" ]]; then
-        log_info "Installing VS Code extensions..."
-        while IFS= read -r ext; do
-            [[ -z "$ext" || "$ext" == \#* ]] && continue
-            code --install-extension "$ext" --force 2>/dev/null || true
-        done < "$ICLOUD_DIR/vscode/extensions.txt"
-        log_ok "VS Code extensions installed"
+        if [[ "$dry_run" == "true" ]]; then
+            log_info "[DRY-RUN] Would install VS Code extensions from: $ICLOUD_DIR/vscode/extensions.txt"
+        else
+            log_info "Installing VS Code extensions..."
+            while IFS= read -r ext; do
+                [[ -z "$ext" || "$ext" == \#* ]] && continue
+                code --install-extension "$ext" --force 2>/dev/null || true
+            done < "$ICLOUD_DIR/vscode/extensions.txt"
+            log_ok "VS Code extensions installed"
+        fi
     fi
 
-    log_ok "Apply complete!"
+    if [[ "$dry_run" == "true" ]]; then
+        log_ok "[DRY-RUN] Apply preview complete!"
+    else
+        log_ok "Apply complete!"
+    fi
+}
+
+# ===== Diff: 顯示本地與 iCloud 差異 =====
+diff_configs() {
+    log_info "Comparing local vs iCloud..."
+
+    if ! check_icloud_ready; then
+        log_warn "iCloud 未就緒"
+        exit 1
+    fi
+
+    local has_diff=false
+
+    # Claude agents
+    if [[ -d "$HOME/.claude/agents" ]] && [[ ! -L "$HOME/.claude/agents" ]]; then
+        if [[ -d "$ICLOUD_DIR/claude/agents" ]]; then
+            echo ""
+            log_info "Claude agents:"
+            if diff -rq "$HOME/.claude/agents" "$ICLOUD_DIR/claude/agents" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
+    # Claude skills
+    if [[ -d "$HOME/.claude/skills" ]] && [[ ! -L "$HOME/.claude/skills" ]]; then
+        if [[ -d "$ICLOUD_DIR/claude/skills" ]]; then
+            echo ""
+            log_info "Claude skills:"
+            if diff -rq "$HOME/.claude/skills" "$ICLOUD_DIR/claude/skills" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
+    # Codex skills
+    if [[ -d "$HOME/.codex/skills" ]] && [[ ! -L "$HOME/.codex/skills" ]]; then
+        if [[ -d "$ICLOUD_DIR/codex/skills" ]]; then
+            echo ""
+            log_info "Codex skills:"
+            if diff -rq "$HOME/.codex/skills" "$ICLOUD_DIR/codex/skills" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
+    # Claude settings.json
+    if [[ -f "$HOME/.claude/settings.json" ]]; then
+        if [[ -f "$ICLOUD_DIR/claude/settings.json" ]]; then
+            echo ""
+            log_info "Claude settings.json:"
+            if diff -q "$HOME/.claude/settings.json" "$ICLOUD_DIR/claude/settings.json" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
+    # OpenCode config
+    if [[ -f "$HOME/.config/opencode/oh-my-opencode.json" ]] && [[ ! -L "$HOME/.config/opencode/oh-my-opencode.json" ]]; then
+        if [[ -f "$ICLOUD_DIR/opencode/oh-my-opencode.json" ]]; then
+            echo ""
+            log_info "OpenCode oh-my-opencode.json:"
+            if diff -q "$HOME/.config/opencode/oh-my-opencode.json" "$ICLOUD_DIR/opencode/oh-my-opencode.json" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
+    # OpenCode agents
+    if [[ -d "$HOME/.config/opencode/agent" ]] && [[ ! -L "$HOME/.config/opencode/agent" ]]; then
+        if [[ -d "$ICLOUD_DIR/opencode/agent" ]]; then
+            echo ""
+            log_info "OpenCode agents:"
+            if diff -rq "$HOME/.config/opencode/agent" "$ICLOUD_DIR/opencode/agent" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
+    # OpenCode plugin
+    if [[ -d "$HOME/.config/opencode/plugin" ]] && [[ ! -L "$HOME/.config/opencode/plugin" ]]; then
+        if [[ -d "$ICLOUD_DIR/opencode/plugin" ]]; then
+            echo ""
+            log_info "OpenCode plugin:"
+            if diff -rq "$HOME/.config/opencode/plugin" "$ICLOUD_DIR/opencode/plugin" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
+    # OpenCode superpowers
+    if [[ -d "$HOME/.config/opencode/superpowers" ]] && [[ ! -L "$HOME/.config/opencode/superpowers" ]]; then
+        if [[ -d "$ICLOUD_DIR/opencode/superpowers" ]]; then
+            echo ""
+            log_info "OpenCode superpowers:"
+            if diff -rq "$HOME/.config/opencode/superpowers" "$ICLOUD_DIR/opencode/superpowers" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
+    echo ""
+    if [[ "$has_diff" == "false" ]]; then
+        log_ok "No differences found"
+    else
+        log_info "Differences found above"
+    fi
 }
 
 # ===== Status: 顯示同步狀態 =====
@@ -315,15 +556,22 @@ status() {
 
 # ===== Main =====
 case "${1:-status}" in
-    capture)  capture ;;
-    apply)    apply ;;
+    capture)  shift; capture "$@" ;;
+    apply)    shift; apply "$@" ;;
+    diff)     diff_configs ;;
     status)   status ;;
     *)
-        echo "Usage: icloud-sync.sh [capture|apply|status]"
+        echo "Usage: icloud-sync.sh [command] [options]"
         echo ""
-        echo "  capture  — 將本地設定同步到 iCloud"
-        echo "  apply    — 從 iCloud 同步設定到本地"
-        echo "  status   — 顯示同步狀態"
+        echo "Commands:"
+        echo "  capture [--force]      — 將本地設定同步到 iCloud"
+        echo "  apply [-n|--dry-run]   — 從 iCloud 同步設定到本地"
+        echo "  diff                   — 顯示本地與 iCloud 的差異"
+        echo "  status                 — 顯示同步狀態"
+        echo ""
+        echo "Options:"
+        echo "  --force         (capture) 強制覆蓋，即使 iCloud 版本較新"
+        echo "  -n, --dry-run   (apply) 預覽變更而不實際執行"
         exit 1
         ;;
 esac

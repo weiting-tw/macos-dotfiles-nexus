@@ -37,14 +37,16 @@ model = "o3"
 model_reasoning_effort = "high"
 model_reasoning_summary = "detailed"
 
+{{- if env "AZURE_OPENAI_ENDPOINT" }}
 [model_providers.azure]
 name = "Azure"
-base_url= "https://wilbe-mfv8vy68-eastus2.cognitiveservices.azure.com/openai/"
+base_url= "{{ env "AZURE_OPENAI_ENDPOINT" }}"
 env_key = "OPENAI_API_KEY_app_mfv8vy68"
 
 # Newer versions appear to support the responses API, see https://github.com/openai/codex/pull/1321
 query_params = { api-version = "2025-04-01-preview" }
 wire_api = "responses"
+{{- end }}
 
 [sandbox_workspace_write]
 network_access = true

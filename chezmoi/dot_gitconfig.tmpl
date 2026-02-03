@@ -28,7 +28,10 @@
 [user]
     name = {{ .name }}
     email = {{ .email }}
-    signingKey = {{ .git.signing_key }}
+{{- $gpgKey := env "GPG_SIGNING_KEY" | default .git.signing_key }}
+{{- if $gpgKey }}
+    signingKey = {{ $gpgKey }}
+{{- end }}
 [alias]
     hide = update-index --assume-unchanged
     unhide = update-index --no-assume-unchanged

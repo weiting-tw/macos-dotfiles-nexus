@@ -5,4 +5,6 @@ max-cache-ttl-ssh 0
 auto-key-retrieve
 no-emit-version
 no-tty
-default-key GPG_KEY_REDACTED
+{{- if env "GPG_DEFAULT_KEY" }}
+default-key {{ env "GPG_DEFAULT_KEY" }}
+{{- end }}
