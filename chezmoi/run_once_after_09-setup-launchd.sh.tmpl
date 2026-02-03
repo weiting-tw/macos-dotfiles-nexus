@@ -76,5 +76,37 @@ PLIST
     echo "✓ iCloud capture agent installed (every 6 hours)"
 fi
 
+# ===== gpg-agent auto-start =====
+GPG_PLIST="$LAUNCH_AGENTS/com.user.gpg-agent.plist"
+GPGCONF_BIN="$(command -v gpgconf)"
+
+cat > "$GPG_PLIST" << PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.gpg-agent</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>${GPGCONF_BIN}</string>
+        <string>--launch</string>
+        <string>gpg-agent</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/gpg-agent.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/gpg-agent.err.log</string>
+</dict>
+</plist>
+PLIST
+
+launchctl unload "$GPG_PLIST" 2>/dev/null || true
+launchctl load "$GPG_PLIST"
+echo "✓ gpg-agent auto-start agent installed"
+
 echo "✓ LaunchAgents setup complete"
 {{ end -}}
