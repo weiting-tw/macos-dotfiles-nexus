@@ -202,6 +202,9 @@ export EDITOR="code"
 # zoxide (smart cd)
 eval "$(zoxide init zsh)"
 
+# mise (語言版本管理)
+command -v mise &>/dev/null && eval "$(mise activate zsh)"
+
 # Android Development
 if [[ -d "$HOME/Library/Android/sdk" ]]; then
     export ANDROID_HOME="$HOME/Library/Android/sdk"
