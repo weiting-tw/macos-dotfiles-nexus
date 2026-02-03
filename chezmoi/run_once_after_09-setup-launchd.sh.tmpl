@@ -20,9 +20,9 @@ cat > "$CHEZMOI_PLIST" << PLIST
     <string>com.user.chezmoi-update</string>
     <key>ProgramArguments</key>
     <array>
-        <string>${CHEZMOI_BIN}</string>
-        <string>update</string>
-        <string>--no-tty</string>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>${CHEZMOI_BIN} update --no-tty 2&gt;&amp;1 || osascript -e 'display notification "chezmoi update failed — check /tmp/chezmoi-update.err.log" with title "Dotfiles Sync"'</string>
     </array>
     <key>StartInterval</key>
     <integer>43200</integer>
@@ -56,8 +56,8 @@ if [[ -f "$ICLOUD_SYNC" ]]; then
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>${ICLOUD_SYNC}</string>
-        <string>capture</string>
+        <string>-c</string>
+        <string>${ICLOUD_SYNC} capture 2&gt;&amp;1 || osascript -e 'display notification "iCloud capture failed — check /tmp/icloud-capture.err.log" with title "Dotfiles Sync"'</string>
     </array>
     <key>StartInterval</key>
     <integer>21600</integer>
