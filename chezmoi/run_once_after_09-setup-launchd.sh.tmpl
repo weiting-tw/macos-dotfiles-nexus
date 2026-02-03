@@ -4,7 +4,8 @@
 set -euo pipefail
 
 LAUNCH_AGENTS="$HOME/Library/LaunchAgents"
-mkdir -p "$LAUNCH_AGENTS"
+LOG_DIR="$HOME/.local/log/dotfiles"
+mkdir -p "$LAUNCH_AGENTS" "$LOG_DIR"
 
 # ===== chezmoi auto-update agent =====
 CHEZMOI_PLIST="$LAUNCH_AGENTS/com.user.chezmoi-update.plist"
@@ -22,16 +23,16 @@ cat > "$CHEZMOI_PLIST" << PLIST
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>${CHEZMOI_BIN} update --no-tty 2&gt;&amp;1 || osascript -e 'display notification "chezmoi update failed — check /tmp/chezmoi-update.err.log" with title "Dotfiles Sync"'</string>
+        <string>${CHEZMOI_BIN} update --no-tty 2&gt;&amp;1 || osascript -e 'display notification "chezmoi update failed — check ${LOG_DIR}/chezmoi-update.err.log" with title "Dotfiles Sync"'</string>
     </array>
     <key>StartInterval</key>
     <integer>43200</integer>
     <key>RunAtLoad</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/tmp/chezmoi-update.out.log</string>
+    <string>${LOG_DIR}/chezmoi-update.out.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/chezmoi-update.err.log</string>
+    <string>${LOG_DIR}/chezmoi-update.err.log</string>
 </dict>
 </plist>
 PLIST
@@ -57,16 +58,16 @@ if [[ -f "$ICLOUD_SYNC" ]]; then
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>${ICLOUD_SYNC} capture 2&gt;&amp;1 || osascript -e 'display notification "iCloud capture failed — check /tmp/icloud-capture.err.log" with title "Dotfiles Sync"'</string>
+        <string>${ICLOUD_SYNC} capture 2&gt;&amp;1 || osascript -e 'display notification "iCloud capture failed — check ${LOG_DIR}/icloud-capture.err.log" with title "Dotfiles Sync"'</string>
     </array>
     <key>StartInterval</key>
     <integer>21600</integer>
     <key>RunAtLoad</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/tmp/icloud-capture.out.log</string>
+    <string>${LOG_DIR}/icloud-capture.out.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/icloud-capture.err.log</string>
+    <string>${LOG_DIR}/icloud-capture.err.log</string>
 </dict>
 </plist>
 PLIST
@@ -97,9 +98,9 @@ cat > "$GPG_PLIST" << PLIST
     <key>RunAtLoad</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/tmp/gpg-agent.out.log</string>
+    <string>${LOG_DIR}/gpg-agent.out.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/gpg-agent.err.log</string>
+    <string>${LOG_DIR}/gpg-agent.err.log</string>
 </dict>
 </plist>
 PLIST
