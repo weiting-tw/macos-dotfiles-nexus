@@ -2,8 +2,10 @@ preferred_auth_method = "chatgpt"
 forced_login_method = "chatgpt"
 
 profile="codex-max"
-# same as `--sandbox workspace-write`
-sandbox_mode = "danger-full-access" # "read-only" or "workspace-write" or "danger-full-access"
+
+# 可用選項："read-only" | "workspace-write" | "danger-full-access"
+# workspace-write：僅允許寫入工作目錄，較安全的預設值
+sandbox_mode = "workspace-write"
 approval_policy = "on-failure" # "untrusted" or "on-failure" or "never"
 
 [profiles.codex]
@@ -59,7 +61,8 @@ args = ["-y", "@playwright/mcp@latest"]
 
 [mcp_servers.context7]
 command = "npx"
-args = ["-y", "@upstash/context7-mcp", "--api-key", "{{ env "CONTEXT7_API_KEY" }}"]
+args = ["-y", "@upstash/context7-mcp"]
+env = { "CONTEXT7_API_KEY" = "{{ env "CONTEXT7_API_KEY" }}" }
 
 [mcp_servers.gemini]
 command = "npx"
