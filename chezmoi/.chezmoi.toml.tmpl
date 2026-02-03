@@ -1,10 +1,19 @@
 {{- $email := promptStringOnce . "email" "Email (e.g. you@example.com)" -}}
 {{- $name := promptStringOnce . "name" "Full name" -}}
 {{- $is_work := promptBoolOnce . "is_work" "Is this a work machine" -}}
+{{- $has_docker := promptBoolOnce . "has_docker" "Install Docker" -}}
+{{- $has_ai_tools := promptBoolOnce . "has_ai_tools" "Install AI tools (Claude, Codex, Gemini)" -}}
 
 [data]
     email = {{ $email | quote }}
     name = {{ $name | quote }}
     is_work = {{ $is_work }}
+    has_docker = {{ $has_docker }}
+    has_ai_tools = {{ $has_ai_tools }}
     hostname = {{ .chezmoi.hostname | quote }}
     icloud_dir = {{ joinPath .chezmoi.homeDir "Library/Mobile Documents/com~apple~CloudDocs/dotfiles-shared" | quote }}
+
+encryption = "age"
+[age]
+    identity = "~/.config/chezmoi/key.txt"
+    recipient = ""  # Run: age-keygen -y ~/.config/chezmoi/key.txt
