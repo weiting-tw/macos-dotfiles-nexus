@@ -12,8 +12,3 @@
     has_ai_tools = {{ $has_ai_tools }}
     hostname = {{ .chezmoi.hostname | quote }}
     icloud_dir = {{ joinPath .chezmoi.homeDir "Library/Mobile Documents/com~apple~CloudDocs/dotfiles-shared" | quote }}
-
-encryption = "age"
-[age]
-    identity = "~/.config/chezmoi/key.txt"
-    recipient = ""  # Run: age-keygen -y ~/.config/chezmoi/key.txt

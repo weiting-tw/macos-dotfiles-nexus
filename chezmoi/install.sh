@@ -133,25 +133,9 @@ if [[ "$ICLOUD_ONLY" != true ]]; then
     log_ok "chezmoi 設定完成"
 fi
 
-# ===== Step 5: Age Encryption =====
+# ===== Step 5: Secrets 設定 =====
 if [[ "$ICLOUD_ONLY" != true ]]; then
-    log_title "Step 5: Age Encryption"
-    if [[ -f "$HOME/.config/chezmoi/key.txt" ]]; then
-        log_ok "Age key 已存在"
-    else
-        log_warn "Age encryption key 不存在"
-        log_info "啟用加密 secrets："
-        log_info "  1. age-keygen -o ~/.config/chezmoi/key.txt"
-        log_info "  2. age-keygen -y ~/.config/chezmoi/key.txt  (取得 public key)"
-        log_info "  3. 將 public key 填入 ~/.config/chezmoi/chezmoi.toml [age] recipient"
-        log_info "  4. chezmoi add --encrypt ~/.secrets"
-        log_info "  5. 將 key.txt 備份到 Bitwarden"
-    fi
-fi
-
-# ===== Step 6: Secrets 設定 =====
-if [[ "$ICLOUD_ONLY" != true ]]; then
-    log_title "Step 6: Secrets"
+    log_title "Step 5: Secrets"
     if [[ -f "$HOME/.secrets" ]]; then
         log_ok "~/.secrets 已存在"
     else
@@ -168,9 +152,9 @@ if [[ "$ICLOUD_ONLY" != true ]]; then
     fi
 fi
 
-# ===== Step 7: iCloud 同步 =====
+# ===== Step 6: iCloud 同步 =====
 if [[ "$CHEZMOI_ONLY" != true ]]; then
-    log_title "Step 7: iCloud 同步設定"
+    log_title "Step 6: iCloud 同步設定"
 
     ICLOUD_DIR="$HOME/Library/Mobile Documents/com~apple~CloudDocs/dotfiles-shared"
     CHEZMOI_SOURCE="$(chezmoi source-path 2>/dev/null || echo "")"
