@@ -1,14 +1,9 @@
+# 機器特定的 Host 設定（不受 chezmoi 管理）
+Include config.d/*
+
 # ===== 全域：Bitwarden SSH Agent =====
 Host *
     IdentityAgent "~/.bitwarden-ssh-agent.sock"
     AddKeysToAgent yes
     ServerAliveInterval 60
     ServerAliveCountMax 3
-
-# ===== GitHub =====
-Host github.com
-    User git
-
-# ===== 自架 GitLab =====
-Host git.weiting.me
-    User git
