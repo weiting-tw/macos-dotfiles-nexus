@@ -1,0 +1,28 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Install global npm packages (re-runs when this script changes)
+set -euo pipefail
+
+if ! command -v npm &>/dev/null; then
+    echo "⚠ npm not found, skipping global packages"
+    exit 0
+fi
+
+# ===== Global npm packages =====
+PACKAGES=(
+    "@google/gemini-cli"
+    "aicommits"
+    "yarn"
+)
+
+for pkg in "${PACKAGES[@]}"; do
+    if ! npm list -g "$pkg" &>/dev/null; then
+        echo "Installing $pkg..."
+        npm install -g "$pkg"
+    else
+        echo "✓ $pkg already installed"
+    fi
+done
+
+echo "✓ All npm global packages installed"
+{{ end -}}
