@@ -10,11 +10,14 @@ ohmyzsh/ohmyzsh path:plugins/npm
 ohmyzsh/ohmyzsh path:plugins/pip
 ohmyzsh/ohmyzsh path:plugins/brew
 ohmyzsh/ohmyzsh path:plugins/macos
+ohmyzsh/ohmyzsh path:plugins/tmux
 
 # 第三方 plugins
 zsh-users/zsh-autosuggestions
 zsh-users/zsh-syntax-highlighting
 zsh-users/zsh-completions
+zsh-users/zsh-history-substring-search
+danarth/azure-cli.zsh
 
 # Theme
 ohmyzsh/ohmyzsh path:themes/af-magic
