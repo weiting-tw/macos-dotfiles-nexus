@@ -9,3 +9,5 @@ ssh:
   gitlab_pubkey: "id_ed25519.pub"
 
 editor: "code"
+
+dock_autohide: false
