@@ -1,12 +1,10 @@
 {{- $email := promptStringOnce . "email" "Email (e.g. you@example.com)" -}}
 {{- $name := promptStringOnce . "name" "Full name" -}}
 {{- $is_work := promptBoolOnce . "is_work" "Is this a work machine" -}}
-{{- $dock_autohide := promptBoolOnce . "dock_autohide" "Auto-hide Dock" -}}
 
 [data]
     email = {{ $email | quote }}
     name = {{ $name | quote }}
     is_work = {{ $is_work }}
-    dock_autohide = {{ $dock_autohide }}
     hostname = {{ .chezmoi.hostname | quote }}
     icloud_dir = {{ joinPath .chezmoi.homeDir "Library/Mobile Documents/com~apple~CloudDocs/dotfiles-shared" | quote }}
