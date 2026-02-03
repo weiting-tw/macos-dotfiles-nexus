@@ -419,8 +419,8 @@ launchctl load ~/Library/LaunchAgents/com.user.chezmoi-update.plist
 launchctl load ~/Library/LaunchAgents/com.user.icloud-capture.plist
 
 # 查看 log
-cat /tmp/chezmoi-update.out.log
-cat /tmp/icloud-capture.out.log
+cat ~/.local/log/dotfiles/chezmoi-update.out.log
+cat ~/.local/log/dotfiles/icloud-capture.out.log
 ```
 
 ### secrets 未注入
