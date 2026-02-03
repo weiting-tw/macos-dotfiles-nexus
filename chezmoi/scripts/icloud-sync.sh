@@ -3,6 +3,14 @@
 # 用法: icloud-sync.sh [capture|apply|status]
 set -euo pipefail
 
+# ===== flock 防止並發執行 =====
+LOCK_FILE="/tmp/icloud-sync.lock"
+exec 200>"$LOCK_FILE"
+if ! flock -n 200; then
+    echo "Another icloud-sync instance is running. Exiting."
+    exit 0
+fi
+
 ICLOUD_DIR="$HOME/Library/Mobile Documents/com~apple~CloudDocs/dotfiles-shared"
 
 # 顏色
@@ -15,9 +23,26 @@ log_ok()   { echo -e "${GREEN}✓${NC} $1"; }
 log_warn() { echo -e "${YELLOW}⚠${NC} $1"; }
 log_info() { echo -e "${BLUE}ℹ${NC} $1"; }
 
+# ===== iCloud 可用性檢查 =====
+check_icloud_ready() {
+    if [[ ! -d "$ICLOUD_DIR" ]]; then
+        log_warn "iCloud 目錄不存在: $ICLOUD_DIR"
+        return 1
+    fi
+    # 檢查是否有 iCloud 暫存檔（表示尚未下載完成）
+    if find "$ICLOUD_DIR" -name ".*.icloud" -maxdepth 2 2>/dev/null | head -1 | grep -q .; then
+        log_warn "iCloud 尚有檔案未下載完成，部分同步可能不完整"
+    fi
+    return 0
+}
+
 # ===== Capture: 本地 → iCloud =====
 capture() {
     log_info "Capturing local configs to iCloud..."
+    if ! check_icloud_ready; then
+        log_warn "iCloud 未就緒，跳過 capture"
+        exit 1
+    fi
     mkdir -p "$ICLOUD_DIR"/{claude/{agents,skills},codex/skills,opencode/{agent,plugin,superpowers},vscode,iterm2}
 
     # Claude Code agents
@@ -90,8 +115,8 @@ capture() {
 apply() {
     log_info "Applying iCloud configs to local..."
 
-    if [[ ! -d "$ICLOUD_DIR" ]]; then
-        log_warn "iCloud directory not found: $ICLOUD_DIR"
+    if ! check_icloud_ready; then
+        log_warn "iCloud 未就緒，跳過 apply"
         log_info "Run 'icloud-sync.sh capture' on another machine first."
         exit 1
     fi
