@@ -197,6 +197,9 @@ alias ocx='omnara --base-url "${OMNARA_BASE_URL}" --agent=codex --permission-mod
 [[ -d "$HOME/miniconda3" ]] && export PATH="$HOME/miniconda3/bin:$PATH"
 export EDITOR="code"
 
+# zoxide (smart cd)
+eval "$(zoxide init zsh)"
+
 # Android Development
 if [[ -d "$HOME/Library/Android/sdk" ]]; then
     export ANDROID_HOME="$HOME/Library/Android/sdk"
