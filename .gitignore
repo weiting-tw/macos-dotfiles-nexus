@@ -21,6 +21,11 @@ ssh/*
 
 # 敏感環境變數
 .secrets
+*.age
+key.txt
+
+# chezmoi 加密金鑰
+.config/chezmoi/key.txt
 
 # Template 渲染產出（不追蹤）
 ai/opencode/opencode.json

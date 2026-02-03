@@ -1,0 +1,5 @@
+# chezmoi template 變數（非真實金鑰）
+chezmoi/dot_npmrc.tmpl
+chezmoi/private_dot_codex/**
+chezmoi/private_dot_config/opencode/**
+chezmoi/Library/**
