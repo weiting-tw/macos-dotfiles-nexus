@@ -9,6 +9,8 @@ export HOMEBREW_CASK_OPTS="--appdir=~/Applications"
 # ===== Antidote Plugin Manager =====
 # 取代直接載入 oh-my-zsh，改用 Antidote 統一管理
 # Plugin 清單在 ~/.zsh_plugins.txt
+# Theme 由 use-omz 的 precmd hook 自動載入（需在 antidote load 前設定）
+ZSH_THEME="af-magic"
 source "$HOME/.antidote/antidote.zsh"
 antidote load "$HOME/.zsh_plugins.txt"
 # User configuration
