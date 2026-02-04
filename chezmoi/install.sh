@@ -2,7 +2,7 @@
 # ============================================================
 # macOS Bootstrap — chezmoi + iCloud 混合架構
 # 用法:
-#   curl -fsSL https://raw.githubusercontent.com/weiting-tw/dotfiles/main/chezmoi/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/weiting-tw/macos-dotfiles-nexus/main/chezmoi/install.sh | bash
 #   或
 #   bash install.sh [--chezmoi-only] [--icloud-only] [--help]
 # ============================================================
@@ -25,7 +25,7 @@ log_title() { echo -e "\n${BOLD}$1${NC}"; }
 # ===== 參數解析 =====
 CHEZMOI_ONLY=false
 ICLOUD_ONLY=false
-REPO_URL="${DOTFILES_REPO:-https://github.com/weiting-tw/dotfiles.git}"
+REPO_URL="${DOTFILES_REPO:-https://github.com/weiting-tw/macos-dotfiles-nexus.git}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in

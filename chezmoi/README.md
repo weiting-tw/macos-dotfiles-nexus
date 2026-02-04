@@ -39,11 +39,11 @@
 
 ```bash
 # 方法 1：直接執行（推薦）
-bash <(curl -fsSL https://raw.githubusercontent.com/weiting-tw/dotfiles/main/chezmoi/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/weiting-tw/macos-dotfiles-nexus/main/chezmoi/install.sh)
 
 # 方法 2：先 clone 再執行
-git clone https://github.com/weiting-tw/dotfiles.git
-cd settings/chezmoi
+git clone https://github.com/weiting-tw/macos-dotfiles-nexus.git
+cd macos-dotfiles-nexus/chezmoi
 bash install.sh
 ```
 
@@ -314,7 +314,7 @@ icloud-sync.sh apply        # 套用 iCloud 變更
 # 1. Fork 此 repo
 # 2. 修改 .chezmoidata.yaml 的預設值
 # 3. 在新機器執行：
-chezmoi init --apply https://github.com/weiting-tw/dotfiles.git
+chezmoi init --apply https://github.com/weiting-tw/macos-dotfiles-nexus.git
 ```
 
 ### 方法 3：只共用部分設定
