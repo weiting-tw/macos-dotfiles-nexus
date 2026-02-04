@@ -202,8 +202,12 @@ alias cc='claude --allow-dangerously-skip-permissions'
 alias oc='omnara --base-url "${OMNARA_BASE_URL}" --permission-mode bypassPermissions'
 alias ocx='omnara --base-url "${OMNARA_BASE_URL}" --agent=codex --permission-mode bypassPermissions'
 
-# mise (shims 模式，避免 hook)
-command -v mise &>/dev/null && export PATH="$HOME/.local/share/mise/shims:$PATH"
+# asdf 版本管理
+if [[ -f "/opt/homebrew/opt/asdf/libexec/asdf.sh" ]]; then
+    . /opt/homebrew/opt/asdf/libexec/asdf.sh
+elif [[ -f "$HOME/.asdf/asdf.sh" ]]; then
+    . "$HOME/.asdf/asdf.sh"
+fi
 
 # conda (完全按需載入，避免意外觸發)
 function conda() {
