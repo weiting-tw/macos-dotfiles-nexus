@@ -26,8 +26,8 @@ chezmoi (Git)          iCloud Drive           Bitwarden
 ### 新機器
 
 ```bash
-git clone https://git.weiting.me/weiting/settings.git ~/Documents/workspace/settings
-cd ~/Documents/workspace/settings && bash chezmoi/install.sh
+git clone https://github.com/weiting-tw/dotfiles.git ~/Documents/workspace/dotfiles
+cd ~/Documents/workspace/dotfiles && bash chezmoi/install.sh
 ```
 
 安裝過程會互動式詢問：
