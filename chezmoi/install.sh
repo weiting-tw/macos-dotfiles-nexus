@@ -129,7 +129,22 @@ if [[ "$ICLOUD_ONLY" != true ]]; then
         chezmoi apply
     else
         log_info "未偵測到本地 repo，從遠端初始化..."
-        chezmoi init --prompt "$REPO_URL" --branch main
+        # Clone repo 到 chezmoi source directory
+        CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
+        rm -rf "$CHEZMOI_SOURCE"
+        git clone --branch main "$REPO_URL" "$CHEZMOI_SOURCE"
+
+        # Repo 結構是 repo/chezmoi/*，需要移動到 repo/*
+        # 保留 .git 以支援 chezmoi update
+        if [[ -d "$CHEZMOI_SOURCE/chezmoi" ]]; then
+            # 移動 chezmoi/ 內容到根目錄
+            shopt -s dotglob
+            mv "$CHEZMOI_SOURCE/chezmoi"/* "$CHEZMOI_SOURCE/"
+            shopt -u dotglob
+            rmdir "$CHEZMOI_SOURCE/chezmoi"
+        fi
+
+        chezmoi init --prompt
         chezmoi apply
     fi
 
