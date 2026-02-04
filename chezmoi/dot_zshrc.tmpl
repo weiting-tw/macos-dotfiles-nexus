@@ -202,14 +202,22 @@ alias cc='claude --allow-dangerously-skip-permissions'
 alias oc='omnara --base-url "${OMNARA_BASE_URL}" --permission-mode bypassPermissions'
 alias ocx='omnara --base-url "${OMNARA_BASE_URL}" --agent=codex --permission-mode bypassPermissions'
 
-[[ -d "$HOME/miniconda3" ]] && export PATH="$HOME/miniconda3/bin:$PATH"
-export EDITOR="code"
+# mise (shims 模式，避免 hook)
+command -v mise &>/dev/null && export PATH="$HOME/.local/share/mise/shims:$PATH"
 
-# zoxide (smart cd)
+# conda (完全按需載入，避免意外觸發)
+function conda() {
+    unset -f conda
+    if [[ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]]; then
+        source "$HOME/miniconda3/etc/profile.d/conda.sh"
+    fi
+    command conda "$@"
+}
+
+# zoxide
 eval "$(zoxide init zsh)"
 
-# mise (語言版本管理)
-command -v mise &>/dev/null && eval "$(mise activate zsh)"
+export EDITOR="code"
 
 # Android Development
 if [[ -d "$HOME/Library/Android/sdk" ]]; then
