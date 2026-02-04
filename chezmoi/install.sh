@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2088
 # ============================================================
 # macOS Bootstrap — chezmoi + iCloud 混合架構
 # 用法:

@@ -11,5 +11,6 @@ ssh:
 editor: "code"
 
 # Feature flags（預設值，chezmoi init 時會互動詢問）
+is_work: false
 has_docker: false
 has_ai_tools: true

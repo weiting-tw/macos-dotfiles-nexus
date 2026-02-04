@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2088
 # iCloud 雙向同步腳本
 # 用法: icloud-sync.sh [capture|apply|diff|status] [options]
 set -euo pipefail
