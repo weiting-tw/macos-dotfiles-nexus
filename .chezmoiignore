@@ -1,10 +1,22 @@
+# 非 dotfile 檔案
 README.md
+README-project.md
 LICENSE
+Makefile
+install.sh
 docs/
 scripts/
+hosts/
 *.md
 !dot_*
 .DS_Store
+
+# 非 chezmoi 管理的目錄
+ai/
+ssh/
+.github/
+.claude/
+.omc/
 
 # SSH 動態檔案（不同步）
 .ssh/known_hosts

@@ -7,7 +7,7 @@ macOS 開發環境同步中樞 — chezmoi + iCloud + Bitwarden 三層混合架�
 ### 新機器一鍵安裝
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/weiting-tw/macos-dotfiles-nexus/main/chezmoi/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/weiting-tw/macos-dotfiles-nexus/main/install.sh)
 ```
 
 安裝後設定 secrets：
@@ -54,10 +54,6 @@ make update       # 從 Git 拉取並套用
 make doctor       # 健康檢查
 make lint         # ShellCheck 檢查腳本
 ```
-
-## 詳細文件
-
-完整教學請參考 [chezmoi/README.md](chezmoi/README.md)。
 
 ## License
 

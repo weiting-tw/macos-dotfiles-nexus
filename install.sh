@@ -3,7 +3,7 @@
 # ============================================================
 # macOS Bootstrap — chezmoi + iCloud 混合架構
 # 用法:
-#   curl -fsSL https://raw.githubusercontent.com/weiting-tw/macos-dotfiles-nexus/main/chezmoi/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/weiting-tw/macos-dotfiles-nexus/main/install.sh | bash
 #   或
 #   bash install.sh [--chezmoi-only] [--icloud-only] [--help]
 # ============================================================
@@ -112,39 +112,16 @@ if [[ "$ICLOUD_ONLY" != true ]]; then
 
     # 判斷腳本是否在本地 repo 中執行
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
-    LOCAL_CHEZMOI=""
 
-    # 情況 1: install.sh 在 chezmoi/ 目錄內（直接執行 repo 裡的 install.sh）
     if [[ -f "$SCRIPT_DIR/.chezmoi.toml.tmpl" ]]; then
-        LOCAL_CHEZMOI="$SCRIPT_DIR"
-    # 情況 2: install.sh 在 repo 根目錄，chezmoi/ 是子目錄
-    elif [[ -d "$SCRIPT_DIR/chezmoi" && -f "$SCRIPT_DIR/chezmoi/.chezmoi.toml.tmpl" ]]; then
-        LOCAL_CHEZMOI="$SCRIPT_DIR/chezmoi"
-    fi
-
-    if [[ -n "$LOCAL_CHEZMOI" ]]; then
-        log_info "偵測到本地 repo: $LOCAL_CHEZMOI"
-        log_info "使用 --source 直接連結至此目錄（不複製）"
-        chezmoi init --source "$LOCAL_CHEZMOI" --prompt
+        # 本地執行：使用 --source 直接連結至此目錄（不複製）
+        log_info "偵測到本地 repo: $SCRIPT_DIR"
+        chezmoi init --source "$SCRIPT_DIR" --prompt
         chezmoi apply
     else
+        # 遠端執行：標準 chezmoi init
         log_info "未偵測到本地 repo，從遠端初始化..."
-        # Clone repo 到 chezmoi source directory
-        CHEZMOI_SOURCE="$HOME/.local/share/chezmoi"
-        rm -rf "$CHEZMOI_SOURCE"
-        git clone --branch main "$REPO_URL" "$CHEZMOI_SOURCE"
-
-        # Repo 結構是 repo/chezmoi/*，需要移動到 repo/*
-        # 保留 .git 以支援 chezmoi update
-        if [[ -d "$CHEZMOI_SOURCE/chezmoi" ]]; then
-            # 移動 chezmoi/ 內容到根目錄
-            shopt -s dotglob
-            mv "$CHEZMOI_SOURCE/chezmoi"/* "$CHEZMOI_SOURCE/"
-            shopt -u dotglob
-            rmdir "$CHEZMOI_SOURCE/chezmoi"
-        fi
-
-        chezmoi init --prompt
+        chezmoi init --prompt "$REPO_URL" --branch main
         chezmoi apply
     fi
 
