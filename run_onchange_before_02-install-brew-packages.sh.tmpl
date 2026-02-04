@@ -3,6 +3,13 @@
 # Install Homebrew and packages (re-runs when this script changes)
 set -euo pipefail
 
+# ===== sudo keep-alive（Cask 安裝需要）=====
+if ! sudo -n true 2>/dev/null; then
+    echo "需要 sudo 權限安裝 Cask 應用..."
+    sudo -v
+fi
+while true; do sudo -n true; sleep 60; kill -0 "$$" 2>/dev/null || exit; done &
+
 # ===== Install Homebrew =====
 if ! command -v brew &>/dev/null; then
     echo "Installing Homebrew..."
