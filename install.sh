@@ -175,6 +175,57 @@ if [[ "$CHEZMOI_ONLY" != true ]]; then
     fi
 fi
 
+# ===== 安裝摘要 =====
+echo ""
+log_title "📋 安裝摘要"
+echo ""
+
+# 檢查各項目狀態
+check_installed() {
+    local name="$1"
+    local check="$2"
+    if eval "$check" &>/dev/null; then
+        log_ok "$name"
+        return 0
+    else
+        log_warn "$name（未安裝）"
+        return 1
+    fi
+}
+
+echo "系統工具："
+check_installed "Xcode CLI Tools" "xcode-select -p"
+check_installed "Homebrew" "command -v brew"
+check_installed "chezmoi" "command -v chezmoi"
+
+echo ""
+echo "CLI 工具："
+check_installed "git" "command -v git"
+check_installed "fzf" "command -v fzf"
+check_installed "ripgrep (rg)" "command -v rg"
+check_installed "bat" "command -v bat"
+check_installed "eza" "command -v eza"
+check_installed "jq" "command -v jq"
+check_installed "zoxide" "command -v zoxide"
+
+echo ""
+echo "開發工具："
+check_installed "Node.js" "command -v node"
+check_installed "Python" "command -v python3"
+check_installed "mise" "command -v mise"
+
+echo ""
+echo "應用程式："
+check_installed "iTerm2" "[[ -d '/Applications/iTerm.app' || -d ~/Applications/iTerm.app ]]"
+check_installed "VS Code" "[[ -d '/Applications/Visual Studio Code.app' || -d ~/Applications/Visual\\ Studio\\ Code.app ]]"
+check_installed "Bitwarden" "[[ -d '/Applications/Bitwarden.app' || -d ~/Applications/Bitwarden.app ]]"
+
+echo ""
+echo "設定檔案："
+check_installed "~/.zshrc" "[[ -f ~/.zshrc ]]"
+check_installed "~/.gitconfig" "[[ -f ~/.gitconfig ]]"
+[[ -f ~/.secrets ]] && log_ok "~/.secrets" || log_warn "~/.secrets（需要手動建立）"
+
 # ===== 完成 =====
 echo ""
 log_title "✅ Bootstrap 完成！"
@@ -189,6 +240,4 @@ echo "  chezmoi edit ~/.zshrc       — 編輯 dotfile"
 echo "  chezmoi apply               — 套用變更"
 echo "  chezmoi update              — 從 git 拉取並套用"
 echo "  chezmoi diff                — 預覽變更"
-echo "  icloud-sync.sh capture      — 手動同步到 iCloud"
-echo "  icloud-sync.sh apply        — 從 iCloud 同步到本地"
 echo ""
