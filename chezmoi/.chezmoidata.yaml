@@ -10,7 +10,5 @@ ssh:
 
 editor: "code"
 
-# Feature flags（預設值，chezmoi init 時會互動詢問）
-is_work: false
-has_docker: false
-has_ai_tools: true
+# Feature flags 由 .chezmoi.toml.tmpl 的 promptBoolOnce 詢問
+# 不在此定義預設值，否則 promptBoolOnce 會跳過詢問
