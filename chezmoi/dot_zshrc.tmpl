@@ -1,7 +1,7 @@
 # If you come from bash you might have to change your $PATH.
 export PATH=$HOME/bin:/usr/local/bin:$HOME/.docker/bin:$PATH
 
-{{- if .is_work }}
+{{- if and (hasKey . "is_work") .is_work }}
 # 公司機器：Cask 安裝到 ~/Applications（避免權限問題）
 export HOMEBREW_CASK_OPTS="--appdir=~/Applications"
 {{- end }}

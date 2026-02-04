@@ -9,7 +9,7 @@ mkdir -p "$HOME/work" "$HOME/personal"
 
 echo "✓ Git identity directories ready (~/work, ~/personal)"
 
-{{- if .is_work }}
+{{- if and (hasKey . "is_work") .is_work }}
 # Link host-specific git identity files if they exist
 HOSTNAME=$(hostname -s)
 HOST_DIR="{{ .chezmoi.sourceDir }}/hosts/${HOSTNAME}"

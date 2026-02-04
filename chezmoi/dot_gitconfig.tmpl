@@ -61,7 +61,7 @@
 	branch = auto
 [pull]
 	rebase = true
-{{- if .is_work }}
+{{- if and (hasKey . "is_work") .is_work }}
 
 [includeIf "gitdir:~/work/"]
     path = ~/.gitconfig-work
