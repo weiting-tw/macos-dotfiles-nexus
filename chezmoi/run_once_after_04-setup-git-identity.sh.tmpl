@@ -9,7 +9,7 @@ mkdir -p "$HOME/work" "$HOME/personal"
 
 echo "✓ Git identity directories ready (~/work, ~/personal)"
 
-{{- if and (hasKey . "is_work") .is_work }}
+{{- if hasKey . "is_work" }}{{- if .is_work }}
 # Link host-specific git identity files if they exist
 HOSTNAME=$(hostname -s)
 HOST_DIR="{{ .chezmoi.sourceDir }}/hosts/${HOSTNAME}"
@@ -23,7 +23,7 @@ if [[ -f "${HOST_DIR}/.gitconfig-personal" ]]; then
     cp "${HOST_DIR}/.gitconfig-personal" "$HOME/.gitconfig-personal"
     echo "✓ Personal git identity linked"
 fi
-{{- end }}
+{{- end }}{{- end }}
 
 echo "✓ Git identity setup complete"
 {{ end -}}

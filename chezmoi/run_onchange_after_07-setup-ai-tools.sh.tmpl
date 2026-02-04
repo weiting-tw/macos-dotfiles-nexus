@@ -1,4 +1,4 @@
-{{- if and (eq .chezmoi.os "darwin") (hasKey . "has_ai_tools") .has_ai_tools -}}
+{{- if eq .chezmoi.os "darwin" }}{{- if hasKey . "has_ai_tools" }}{{- if .has_ai_tools -}}
 #!/bin/bash
 # Setup AI Coding Tools + iCloud sync
 set -euo pipefail
@@ -51,4 +51,4 @@ if command -v bun &>/dev/null && [[ -f "$OPENCODE_DIR/package.json" ]]; then
 fi
 
 echo "✓ AI tools setup complete"
-{{ end -}}
+{{- end }}{{- end }}{{ end -}}
