@@ -3,7 +3,7 @@ export PATH="$HOME/.dotnet/tools:$PATH"
 ## env
 [[ -f ~/.secrets ]] && source ~/.secrets
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
-. "$HOME/.cargo/env"
+[[ -f "$HOME/.cargo/env" ]] && . "$HOME/.cargo/env"
 export PATH="${HOMEBREW_PREFIX}/opt/openssl/bin:$PATH"
 
 # conda 初始化已移至 .zshrc 採用 lazy loading 模式
