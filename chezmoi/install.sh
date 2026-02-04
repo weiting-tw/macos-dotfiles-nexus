@@ -125,10 +125,12 @@ if [[ "$ICLOUD_ONLY" != true ]]; then
     if [[ -n "$LOCAL_CHEZMOI" ]]; then
         log_info "偵測到本地 repo: $LOCAL_CHEZMOI"
         log_info "使用 --source 直接連結至此目錄（不複製）"
-        chezmoi init --source "$LOCAL_CHEZMOI" --prompt --apply
+        chezmoi init --source "$LOCAL_CHEZMOI" --prompt
+        chezmoi apply
     else
         log_info "未偵測到本地 repo，從遠端初始化..."
-        chezmoi init --prompt --apply "$REPO_URL" --branch main
+        chezmoi init --prompt "$REPO_URL" --branch main
+        chezmoi apply
     fi
 
     log_ok "chezmoi 設定完成"
