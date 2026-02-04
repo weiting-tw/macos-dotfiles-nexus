@@ -1,6 +1,23 @@
-# macOS Dotfiles — chezmoi + iCloud
+# macos-dotfiles-nexus
 
-自動化 macOS 開發環境設定，支援多機器同步。
+macOS 開發環境同步中樞 — chezmoi + iCloud + Bitwarden 三層混合架構。
+
+## 快速開始
+
+### 新機器一鍵安裝
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/weiting-tw/macos-dotfiles-nexus/main/chezmoi/install.sh)
+```
+
+安裝後設定 secrets：
+
+```bash
+cp ~/.secrets.example ~/.secrets
+chmod 600 ~/.secrets
+vim ~/.secrets        # 填入 API keys
+source ~/.zshrc
+```
 
 ## 架構
 
@@ -20,30 +37,6 @@ chezmoi (Git)          iCloud Drive           Bitwarden
 | chezmoi (Git) | dotfiles 版本控制 | 穩定、需追蹤變更歷史 |
 | iCloud Drive | AI tools、iTerm2 等頻繁變動設定 | 即時同步，不需每次 commit |
 | Bitwarden | SSH 私鑰、API keys | 機敏資料不能存在任何 repo |
-
-## 快速開始
-
-### 新機器
-
-```bash
-git clone https://github.com/weiting-tw/macos-dotfiles-nexus.git ~/Documents/workspace/macos-dotfiles-nexus
-cd ~/Documents/workspace/macos-dotfiles-nexus && bash chezmoi/install.sh
-```
-
-安裝過程會互動式詢問：
-- Email / 全名（Git identity）
-- 是否為工作機器（cask 安裝到 ~/Applications）
-- 是否安裝 Docker
-- 是否安裝 AI tools（Claude, Codex, Gemini）
-
-安裝後設定 secrets：
-
-```bash
-cp ~/.secrets.example ~/.secrets
-chmod 600 ~/.secrets
-vim ~/.secrets        # 填入 API keys
-source ~/.zshrc
-```
 
 ### 已有機器更新
 
