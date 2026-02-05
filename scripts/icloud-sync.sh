@@ -4,13 +4,14 @@
 # 用法: icloud-sync.sh [capture|apply|diff|status] [options]
 set -euo pipefail
 
-# ===== flock 防止並發執行 =====
+# ===== 防止並發執行（macOS 相容）=====
 LOCK_FILE="/tmp/icloud-sync.lock"
-exec 200>"$LOCK_FILE"
-if ! flock -n 200; then
+if [[ -f "$LOCK_FILE" ]] && kill -0 "$(cat "$LOCK_FILE" 2>/dev/null)" 2>/dev/null; then
     echo "Another icloud-sync instance is running. Exiting."
     exit 0
 fi
+echo $$ > "$LOCK_FILE"
+trap 'rm -f "$LOCK_FILE"' EXIT
 
 ICLOUD_DIR="$HOME/Library/Mobile Documents/com~apple~CloudDocs/dotfiles-shared"
 
