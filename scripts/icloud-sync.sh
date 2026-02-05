@@ -139,6 +139,12 @@ capture() {
         log_ok "OpenCode superpowers → iCloud"
     fi
 
+    # OpenCode providers (動態 provider 設定)
+    if [[ -f "$HOME/.opencode-providers.json" ]] && [[ ! -L "$HOME/.opencode-providers.json" ]]; then
+        cp "$HOME/.opencode-providers.json" "$ICLOUD_DIR/opencode/opencode-providers.json"
+        log_ok "OpenCode providers → iCloud"
+    fi
+
     # VS Code extensions
     if command -v code &>/dev/null; then
         code --list-extensions > "$ICLOUD_DIR/vscode/extensions.txt"
@@ -290,6 +296,17 @@ apply() {
                 ln -sf "$ICLOUD_DIR/opencode/superpowers" "$HOME/.config/opencode/superpowers"
                 log_ok "OpenCode superpowers ← iCloud (symlinked)"
             fi
+        fi
+    fi
+
+    # OpenCode providers (動態 provider 設定)
+    if [[ -f "$ICLOUD_DIR/opencode/opencode-providers.json" ]] && [[ ! -L "$HOME/.opencode-providers.json" ]]; then
+        if [[ "$dry_run" == "true" ]]; then
+            log_info "[DRY-RUN] Would symlink: ~/.opencode-providers.json → $ICLOUD_DIR/opencode/opencode-providers.json"
+        else
+            [[ -f "$HOME/.opencode-providers.json" ]] && mv "$HOME/.opencode-providers.json" "$HOME/.opencode-providers.json.backup.$(date +%s)"
+            ln -sf "$ICLOUD_DIR/opencode/opencode-providers.json" "$HOME/.opencode-providers.json"
+            log_ok "OpenCode providers ← iCloud (symlinked)"
         fi
     fi
 
@@ -487,6 +504,9 @@ status() {
     [[ -d "$ICLOUD_DIR/opencode/superpowers" ]] && \
         log_info "OpenCode superpowers/ ($(ls "$ICLOUD_DIR/opencode/superpowers" 2>/dev/null | wc -l | tr -d ' ') files)"
 
+    [[ -f "$ICLOUD_DIR/opencode/opencode-providers.json" ]] && \
+        log_info "OpenCode providers.json ($(stat -f '%Sm' "$ICLOUD_DIR/opencode/opencode-providers.json" 2>/dev/null || echo 'unknown'))"
+
     [[ -f "$ICLOUD_DIR/vscode/extensions.txt" ]] && \
         log_info "VS Code extensions.txt ($(wc -l < "$ICLOUD_DIR/vscode/extensions.txt" | tr -d ' ') extensions)"
 
@@ -539,6 +559,12 @@ status() {
         log_ok "~/.config/opencode/superpowers → iCloud"
     else
         log_warn "OpenCode superpowers (not symlinked)"
+    fi
+
+    if [[ -L "$HOME/.opencode-providers.json" ]]; then
+        log_ok "~/.opencode-providers.json → iCloud"
+    elif [[ -f "$HOME/.opencode-providers.json" ]]; then
+        log_warn "~/.opencode-providers.json (not symlinked)"
     fi
 
     # iTerm2 native sync (not symlink, uses PrefsCustomFolder)
