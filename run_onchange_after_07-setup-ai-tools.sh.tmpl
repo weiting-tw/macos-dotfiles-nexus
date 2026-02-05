@@ -18,8 +18,12 @@ install_if_missing() {
     if command -v "$check" &>/dev/null || [[ -d "$check" ]]; then
         echo "✓ $name already installed"
     else
-        read -p "Install $name? [y/N] " -n 1 -r
-        echo
+        if [[ -t 0 ]]; then
+            read -p "Install $name? [y/N] " -n 1 -r
+            echo
+        else
+            REPLY="y"  # 非互動環境：自動安裝
+        fi
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             eval "$install_cmd"
             echo "✓ $name installed"

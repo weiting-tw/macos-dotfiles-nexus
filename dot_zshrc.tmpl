@@ -185,14 +185,13 @@ export PATH="$HOME/.gem/ruby/2.6.0/bin:$PATH"
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 export USE_AZURE=true
 
-# === 敏感環境變數已移至 ~/.secrets ===
-[[ -f ~/.secrets ]] && source ~/.secrets
 export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
 
 alias ai-review='codegpt review --lang=zh-tw'
 alias ai-commit='codegpt commit --lang=zh-tw'
 alias g='gemini -y -m gemini-3-pro-preview-11-2025'
 
+{{- if index . "has_ai_tools" }}
 # ⚠️ SECURITY WARNING: 以下別名繞過 AI 工具的權限檢查
 # 這允許 AI 執行檔案刪除、系統修改等危險操作，僅建議在：
 # - 可信任的個人開發環境使用
@@ -201,6 +200,7 @@ alias g='gemini -y -m gemini-3-pro-preview-11-2025'
 alias cc='claude --allow-dangerously-skip-permissions'
 alias oc='omnara --base-url "${OMNARA_BASE_URL}" --permission-mode bypassPermissions'
 alias ocx='omnara --base-url "${OMNARA_BASE_URL}" --agent=codex --permission-mode bypassPermissions'
+{{- end }}
 
 # asdf 版本管理
 if [[ -f "/opt/homebrew/opt/asdf/libexec/asdf.sh" ]]; then

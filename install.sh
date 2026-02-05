@@ -117,33 +117,40 @@ if [[ "$ICLOUD_ONLY" != true ]]; then
         # 本地執行：使用 --source 直接連結至此目錄（不複製）
         log_info "偵測到本地 repo: $SCRIPT_DIR"
         chezmoi init --source "$SCRIPT_DIR" --prompt
-        chezmoi apply
     else
         # 遠端執行：標準 chezmoi init
         log_info "未偵測到本地 repo，從遠端初始化..."
         chezmoi init --prompt "$REPO_URL" --branch main
-        chezmoi apply
     fi
+
+    # ===== Secrets 設定（在 apply 前載入，確保 template 能正確渲染）=====
+    if [[ ! -f "$HOME/.secrets" ]] && [[ -f "$HOME/.secrets.example" ]]; then
+        log_info "從範本建立 ~/.secrets..."
+        cp "$HOME/.secrets.example" "$HOME/.secrets"
+        chmod 600 "$HOME/.secrets"
+        log_warn "請之後編輯 ~/.secrets 填入 API keys"
+    fi
+    if [[ -f "$HOME/.secrets" ]]; then
+        set -a
+        source "$HOME/.secrets"
+        set +a
+        log_ok "已載入 ~/.secrets 環境變數"
+    fi
+
+    # 現在執行 apply，template 能正確取得 env 變數
+    chezmoi apply
 
     log_ok "chezmoi 設定完成"
 fi
 
-# ===== Step 5: Secrets 設定 =====
+# ===== Step 5: Secrets 確認 =====
 if [[ "$ICLOUD_ONLY" != true ]]; then
     log_title "Step 5: Secrets"
     if [[ -f "$HOME/.secrets" ]]; then
         log_ok "~/.secrets 已存在"
     else
-        log_warn "~/.secrets 不存在"
-        if [[ -f "$HOME/.secrets.example" ]]; then
-            log_info "從範本建立..."
-            cp "$HOME/.secrets.example" "$HOME/.secrets"
-            chmod 600 "$HOME/.secrets"
-            log_warn "請編輯 ~/.secrets 填入 API keys"
-            log_info "  vim ~/.secrets"
-        else
-            log_info "請參考 README 建立 ~/.secrets"
-        fi
+        log_warn "~/.secrets 不存在，部分設定可能未正確渲染"
+        log_info "請參考 README 建立 ~/.secrets，然後執行 chezmoi apply"
     fi
 fi
 
@@ -212,7 +219,7 @@ echo ""
 echo "開發工具："
 check_installed "Node.js" "command -v node"
 check_installed "Python" "command -v python3"
-check_installed "mise" "command -v mise"
+check_installed "asdf" "command -v asdf"
 
 echo ""
 echo "應用程式："

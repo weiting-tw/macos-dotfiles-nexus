@@ -9,6 +9,8 @@ if ! sudo -n true 2>/dev/null; then
     sudo -v
 fi
 while true; do sudo -n true; sleep 60; kill -0 "$$" 2>/dev/null || exit; done &
+SUDO_KEEPALIVE_PID=$!
+trap "kill $SUDO_KEEPALIVE_PID 2>/dev/null" EXIT
 
 # ===== Install Homebrew =====
 if ! command -v brew &>/dev/null; then
@@ -54,14 +56,11 @@ brew "uv"            # Python 套件管理
 brew "mkcert"        # 本地 HTTPS 憑證
 brew "ffmpeg"        # 影音處理
 
-# 容器工具
-brew "docker"
-brew "docker-completion"
-
 # 開發工具
 brew "node"
 brew "python"
 brew "asdf"          # 語言版本管理
+brew "bun"           # JavaScript runtime（OpenCode plugin 需要）
 
 # Cask 應用
 cask "bitwarden"
@@ -81,6 +80,24 @@ cask "font-source-code-pro"
 BREWFILE
 
 echo "✓ Base packages installed"
+
+{{- if index . "has_docker" }}
+# ===== Docker packages =====
+brew bundle --file=/dev/stdin <<'DOCKERBREW'
+brew "docker"
+brew "docker-completion"
+DOCKERBREW
+echo "✓ Docker packages installed"
+{{- end }}
+
+# ===== Antidote (Zsh Plugin Manager) =====
+if [[ ! -d "$HOME/.antidote" ]]; then
+    echo "Installing Antidote..."
+    git clone --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote"
+    echo "✓ Antidote installed"
+else
+    echo "✓ Antidote already installed"
+fi
 
 # ===== Host-specific Brewfile =====
 # Check if host-specific Brewfile exists in chezmoi source

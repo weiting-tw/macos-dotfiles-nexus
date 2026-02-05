@@ -4,7 +4,7 @@ help: ## 顯示可用指令
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 bootstrap: ## 首次安裝（完整設定）
-	@bash chezmoi/install.sh
+	@bash install.sh
 
 apply: ## 套用 chezmoi 設定到本機
 	@chezmoi apply
@@ -25,15 +25,15 @@ doctor: ## 檢查 chezmoi 健康狀態
 	@chezmoi doctor
 
 icloud-capture: ## 本地設定 → iCloud
-	@bash chezmoi/scripts/icloud-sync.sh capture
+	@bash scripts/icloud-sync.sh capture
 
 icloud-apply: ## iCloud 設定 → 本地
-	@bash chezmoi/scripts/icloud-sync.sh apply
+	@bash scripts/icloud-sync.sh apply
 
 icloud-status: ## 顯示 iCloud 同步狀態
-	@bash chezmoi/scripts/icloud-sync.sh status
+	@bash scripts/icloud-sync.sh status
 
 lint: ## 執行 shellcheck 檢查腳本
-	@shellcheck chezmoi/scripts/*.sh chezmoi/install.sh || true
+	@shellcheck scripts/*.sh install.sh || true
 
 .DEFAULT_GOAL := help

@@ -53,8 +53,6 @@
     gpgsign = true
 [tag]
     forceSignAnnotated = false
-[url "https://git.gss.com.tw/"]
-	insteadOf = git@git.gss.com.tw:
 [color]
 	diff = auto
 	status = auto
@@ -62,6 +60,9 @@
 [pull]
 	rebase = true
 {{- if index . "is_work" }}
+
+[url "https://git.gss.com.tw/"]
+	insteadOf = git@git.gss.com.tw:
 
 [includeIf "gitdir:~/work/"]
     path = ~/.gitconfig-work
