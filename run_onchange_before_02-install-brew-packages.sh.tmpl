@@ -64,7 +64,8 @@ brew "mise"          # 語言版本管理
 {{- else }}
 brew "asdf"          # 語言版本管理
 {{- end }}
-brew "bun"           # JavaScript runtime（OpenCode plugin 需要）
+tap "oven-sh/bun"
+brew "oven-sh/bun/bun"  # JavaScript runtime（OpenCode plugin 需要）
 
 # Cask 應用
 cask "bitwarden"
