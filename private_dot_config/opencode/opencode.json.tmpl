@@ -103,25 +103,15 @@
           "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
         }
       }
-    }{{- if and (env "AZURE_LB_ENDPOINT") (env "AZURE_LB_BEARER_TOKEN") }},
-    "my-azure-lb": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Azure LB",
-      "options": {
-        "baseURL": "{{ env "AZURE_LB_ENDPOINT" }}",
-        "headers": {
-          "Authorization": "Bearer {{ env "AZURE_LB_BEARER_TOKEN" }}"
-        }
-      },
-      "models": {
-        "gpt-5.2-codex": { "id": "gpt-5.2-codex" },
-        "gpt-5.1-codex": { "id": "gpt-5.1-codex" },
-        "gpt-5.1-codex-max": { "id": "gpt-5.1-codex-max" },
-        "gpt-5.1-codex-mini": { "id": "gpt-5.1-codex-mini", "options": { "useResponsesApi": true } },
-        "gpt-5.2": { "id": "gpt-5.2" },
-        "gpt-5-mini": { "id": "gpt-5-mini" }
-      }
-    }{{- end }}
+    }
+    {{- /* 動態載入額外 providers：~/.opencode-providers.json */ -}}
+    {{- $providersFile := joinPath .chezmoi.homeDir ".opencode-providers.json" -}}
+    {{- if stat $providersFile -}}
+    {{- $providers := output "cat" (joinPath .chezmoi.homeDir ".opencode-providers.json") | fromJson -}}
+    {{- range $key, $val := $providers }},
+    {{ $key | quote }}: {{ $val | toJson }}
+    {{- end -}}
+    {{- end }}
   },
   "lsp": {},
   "mcp": {
