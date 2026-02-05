@@ -59,7 +59,11 @@ brew "ffmpeg"        # 影音處理
 # 開發工具
 brew "node"
 brew "python"
+{{- if eq (index . "version_manager") "mise" }}
+brew "mise"          # 語言版本管理
+{{- else }}
 brew "asdf"          # 語言版本管理
+{{- end }}
 brew "bun"           # JavaScript runtime（OpenCode plugin 需要）
 
 # Cask 應用

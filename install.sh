@@ -219,7 +219,7 @@ echo ""
 echo "開發工具："
 check_installed "Node.js" "command -v node"
 check_installed "Python" "command -v python3"
-check_installed "asdf" "command -v asdf"
+check_installed "asdf/mise" "command -v asdf || command -v mise"
 
 echo ""
 echo "應用程式："

@@ -55,6 +55,52 @@ make doctor       # 健康檢查
 make lint         # ShellCheck 檢查腳本
 ```
 
+## AI 工具設定
+
+### OpenCode
+
+OpenCode 設定檔位於 `~/.config/opencode/opencode.json`，由 chezmoi template 產生。
+
+**Model 設定**：常用 model 已預設在 template 中（Antigravity、Gemini CLI 系列）。
+
+調整 model：
+
+```bash
+chezmoi edit ~/.config/opencode/opencode.json   # 編輯 template
+chezmoi apply                                    # 套用變更
+```
+
+**動態 Provider**：額外的 provider（如 Azure）可透過 `~/.opencode-providers.json` 載入，不需修改 template：
+
+```json
+{
+  "azure": {
+    "models": {
+      "my-model": {
+        "name": "My Azure Model",
+        "limit": { "context": 128000, "output": 4096 },
+        "modalities": { "input": ["text"], "output": ["text"] }
+      }
+    }
+  }
+}
+```
+
+### Codex (OpenAI)
+
+設定檔位於 `~/.codex/config.toml`。需要 `AZURE_OPENAI_ENDPOINT` 環境變數（定義在 `~/.secrets`）。
+
+### Secrets
+
+所有 API key 集中在 `~/.secrets`，bootstrap 時會自動從 `~/.secrets.example` 複製。需手動填入：
+
+| 變數 | 用途 |
+|------|------|
+| `PERPLEXITY_API_KEY` | Perplexity MCP |
+| `CONTEXT7_API_KEY` | Context7 MCP |
+| `AZURE_OPENAI_ENDPOINT` | Codex Azure Provider |
+| `OPENAI_API_KEY_app_mfv8vy68` | Codex Azure API Key |
+
 ## License
 
 MIT

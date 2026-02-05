@@ -3,6 +3,7 @@
 {{- $is_work := promptBoolOnce . "is_work" "Is this a work machine" -}}
 {{- $has_docker := promptBoolOnce . "has_docker" "Install Docker" -}}
 {{- $has_ai_tools := promptBoolOnce . "has_ai_tools" "Install AI tools (Claude, Codex, Gemini)" -}}
+{{- $version_manager := promptStringOnce . "version_manager" "Version manager (asdf/mise)" -}}
 
 [data]
     email = {{ $email | quote }}
@@ -10,5 +11,6 @@
     is_work = {{ $is_work }}
     has_docker = {{ $has_docker }}
     has_ai_tools = {{ $has_ai_tools }}
+    version_manager = {{ $version_manager | quote }}
     hostname = {{ .chezmoi.hostname | quote }}
     icloud_dir = {{ joinPath .chezmoi.homeDir "Library/Mobile Documents/com~apple~CloudDocs/dotfiles-shared" | quote }}

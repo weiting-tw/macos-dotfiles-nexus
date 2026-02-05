@@ -202,12 +202,19 @@ alias oc='omnara --base-url "${OMNARA_BASE_URL}" --permission-mode bypassPermiss
 alias ocx='omnara --base-url "${OMNARA_BASE_URL}" --agent=codex --permission-mode bypassPermissions'
 {{- end }}
 
+{{- if eq (index . "version_manager") "mise" }}
+# mise 版本管理
+if command -v mise &>/dev/null; then
+    eval "$(mise activate zsh)"
+fi
+{{- else }}
 # asdf 版本管理
 if [[ -f "/opt/homebrew/opt/asdf/libexec/asdf.sh" ]]; then
     . /opt/homebrew/opt/asdf/libexec/asdf.sh
 elif [[ -f "$HOME/.asdf/asdf.sh" ]]; then
     . "$HOME/.asdf/asdf.sh"
 fi
+{{- end }}
 
 # conda (完全按需載入，避免意外觸發)
 function conda() {
