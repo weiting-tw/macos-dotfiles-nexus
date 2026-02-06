@@ -82,6 +82,7 @@ capture() {
         check_conflict "$HOME/.claude/skills" "$ICLOUD_DIR/claude/skills" "Claude skills" || has_conflict=true
         check_conflict "$HOME/.codex/skills" "$ICLOUD_DIR/codex/skills" "Codex skills" || has_conflict=true
         check_conflict "$HOME/.claude/settings.json" "$ICLOUD_DIR/claude/settings.json" "Claude settings.json" || has_conflict=true
+        check_conflict "$HOME/.claude-code-router/config.json" "$ICLOUD_DIR/ccr/config.json" "CCR config" || has_conflict=true
         check_conflict "$HOME/.config/opencode/oh-my-opencode.json" "$ICLOUD_DIR/opencode/oh-my-opencode.json" "OpenCode config" || has_conflict=true
         check_conflict "$HOME/.config/opencode/agent" "$ICLOUD_DIR/opencode/agent" "OpenCode agents" || has_conflict=true
         check_conflict "$HOME/.config/opencode/plugin" "$ICLOUD_DIR/opencode/plugin" "OpenCode plugin" || has_conflict=true
@@ -93,7 +94,7 @@ capture() {
         fi
     fi
 
-    mkdir -p "$ICLOUD_DIR"/{claude/{agents,skills},codex/skills,opencode/{agent,plugin,superpowers},vscode,iterm2}
+    mkdir -p "$ICLOUD_DIR"/{claude/{agents,skills},codex/skills,ccr,opencode/{agent,plugin,superpowers},vscode,iterm2}
 
     # Claude Code agents
     if [[ -d "$HOME/.claude/agents" ]] && [[ ! -L "$HOME/.claude/agents" ]]; then
@@ -117,6 +118,12 @@ capture() {
     if [[ -f "$HOME/.claude/settings.json" ]]; then
         cp "$HOME/.claude/settings.json" "$ICLOUD_DIR/claude/settings.json"
         log_ok "Claude settings.json → iCloud"
+    fi
+
+    # Claude Code Router (CCR) config
+    if [[ -f "$HOME/.claude-code-router/config.json" ]] && [[ ! -L "$HOME/.claude-code-router/config.json" ]]; then
+        cp "$HOME/.claude-code-router/config.json" "$ICLOUD_DIR/ccr/config.json"
+        log_ok "CCR config.json → iCloud"
     fi
 
     # OpenCode non-sensitive
@@ -244,6 +251,27 @@ apply() {
             fi
         else
             log_ok "Codex skills already symlinked"
+        fi
+    fi
+
+    # Claude Code Router (CCR) config (create symlink)
+    if [[ -f "$ICLOUD_DIR/ccr/config.json" ]]; then
+        if [[ "$dry_run" == "true" ]]; then
+            log_info "[DRY-RUN] Would create directory: ~/.claude-code-router"
+        else
+            mkdir -p "$HOME/.claude-code-router"
+        fi
+        if [[ ! -L "$HOME/.claude-code-router/config.json" ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -f "$HOME/.claude-code-router/config.json" ]] && log_info "[DRY-RUN] Would backup: config.json → config.json.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.claude-code-router/config.json → $ICLOUD_DIR/ccr/config.json"
+            else
+                [[ -f "$HOME/.claude-code-router/config.json" ]] && mv "$HOME/.claude-code-router/config.json" "$HOME/.claude-code-router/config.json.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/ccr/config.json" "$HOME/.claude-code-router/config.json"
+                log_ok "CCR config ← iCloud (symlinked)"
+            fi
+        else
+            log_ok "CCR config already symlinked"
         fi
     fi
 
@@ -393,6 +421,19 @@ diff_configs() {
         fi
     fi
 
+    # CCR config
+    if [[ -f "$HOME/.claude-code-router/config.json" ]] && [[ ! -L "$HOME/.claude-code-router/config.json" ]]; then
+        if [[ -f "$ICLOUD_DIR/ccr/config.json" ]]; then
+            echo ""
+            log_info "CCR config.json:"
+            if diff -q "$HOME/.claude-code-router/config.json" "$ICLOUD_DIR/ccr/config.json" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
     # Claude settings.json
     if [[ -f "$HOME/.claude/settings.json" ]]; then
         if [[ -f "$ICLOUD_DIR/claude/settings.json" ]]; then
@@ -505,6 +546,9 @@ status() {
     [[ -d "$ICLOUD_DIR/opencode/superpowers" ]] && \
         log_info "OpenCode superpowers/ ($(ls "$ICLOUD_DIR/opencode/superpowers" 2>/dev/null | wc -l | tr -d ' ') files)"
 
+    [[ -f "$ICLOUD_DIR/ccr/config.json" ]] && \
+        log_info "CCR config.json ($(stat -f '%Sm' "$ICLOUD_DIR/ccr/config.json" 2>/dev/null || echo 'unknown'))"
+
     [[ -f "$ICLOUD_DIR/opencode/opencode-providers.json" ]] && \
         log_info "OpenCode providers.json ($(stat -f '%Sm' "$ICLOUD_DIR/opencode/opencode-providers.json" 2>/dev/null || echo 'unknown'))"
 
@@ -560,6 +604,12 @@ status() {
         log_ok "~/.config/opencode/superpowers → iCloud"
     else
         log_warn "OpenCode superpowers (not symlinked)"
+    fi
+
+    if [[ -L "$HOME/.claude-code-router/config.json" ]]; then
+        log_ok "~/.claude-code-router/config.json → iCloud"
+    elif [[ -f "$HOME/.claude-code-router/config.json" ]]; then
+        log_warn "~/.claude-code-router/config.json (not symlinked)"
     fi
 
     if [[ -L "$HOME/.opencode-providers.json" ]]; then
