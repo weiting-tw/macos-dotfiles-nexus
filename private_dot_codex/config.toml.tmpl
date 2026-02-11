@@ -88,6 +88,13 @@ wire_api = "responses"
 [sandbox_workspace_write]
 network_access = true
 
+{{ if env "AZURE_OPENAI_ENDPOINT" }}
+# Codex CLI sandbox 預設會過濾名稱含 KEY/SECRET/TOKEN 的環境變數
+# ignore_default_excludes = true 可停用此行為，確保 Azure API Key 能正常傳入
+[shell_environment_policy]
+ignore_default_excludes = true
+{{- end }}
+
 ## mcp
 
 [mcp_servers.playwright]
@@ -102,3 +109,4 @@ env = { "CONTEXT7_API_KEY" = "{{ env "CONTEXT7_API_KEY" }}" }
 [mcp_servers.gemini]
 command = "npx"
 args = ["-y", "gemini-mcp-tool@latest"]
+
