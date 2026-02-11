@@ -1,0 +1,90 @@
+# Codex MCP wrapper 專用設定
+# 與 ~/.codex/config.toml 相同，但不載入 MCP servers
+# 避免 wrapper model detection 的 5 秒超時問題
+
+profile="codex-max"
+
+sandbox_mode = "workspace-write"
+approval_policy = "on-failure"
+
+[profiles.gpt-5.1]
+model_provider = "azure"
+model = "gpt-5.1"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles.gpt-5.1-mini]
+model_provider = "azure"
+model = "gpt-5.1-mini"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles.codex]
+model_provider = "azure"
+model = "gpt-5.1-codex"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles.codex-mini]
+model_provider = "azure"
+model = "gpt-5.1-codex-mini"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles.codex-max]
+model_provider = "azure"
+model = "gpt-5.1-codex-max"
+model_reasoning_effort = "xhigh"
+model_reasoning_summary = "detailed"
+
+[profiles.gpt-5.2]
+model_provider = "azure"
+model = "gpt-5.2"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles.gpt-5.2-codex]
+model_provider = "azure"
+model = "gpt-5.2-codex"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles.gpt-5-mini]
+model_provider = "azure"
+model = "gpt-5-mini"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+max_tokens= 950
+
+[profiles.o4-mini]
+model_provider = "azure"
+model = "o4-mini"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles.o3]
+model_provider = "azure"
+model = "o3"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+{{ if env "AZURE_OPENAI_ENDPOINT" }}
+[model_providers.azure]
+name = "Azure"
+base_url= "{{ env "AZURE_OPENAI_ENDPOINT" }}"
+env_key = "OPENAI_API_KEY_app_mfv8vy68"
+query_params = { api-version = "2025-04-01-preview" }
+wire_api = "responses"
+{{- end }}
+
+[sandbox_workspace_write]
+network_access = true
+
+{{ if env "AZURE_OPENAI_ENDPOINT" }}
+# Codex CLI sandbox 預設會過濾名稱含 KEY/SECRET/TOKEN 的環境變數
+# ignore_default_excludes = true 可停用此行為，確保 Azure API Key 能正常傳入
+[shell_environment_policy]
+ignore_default_excludes = true
+{{- end }}
+
+# 不含 [mcp_servers.*] — wrapper 不需要載入 MCP servers
