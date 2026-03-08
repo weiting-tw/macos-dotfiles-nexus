@@ -32,6 +32,10 @@ log_info() { echo -e "${BLUE}ℹ${NC} $1"; }
 SYMLINK_REGISTRY=(
     "$HOME/.claude/agents|dir|Claude agents"
     "$HOME/.claude/skills|dir|Claude skills"
+    "$HOME/.claude/hooks|dir|Claude hooks"
+    "$HOME/.claude/hud|dir|Claude HUD"
+    "$HOME/.claude/CLAUDE.md|file|Claude CLAUDE.md"
+    "$HOME/.claude/.mcp.json|file|Claude MCP config"
     "$HOME/.codex/skills|dir|Codex skills"
     "$HOME/.claude-code-router/config.json|file|CCR config"
     "$HOME/.config/opencode/oh-my-opencode.json|file|OpenCode config"
@@ -259,6 +263,10 @@ capture() {
         local has_conflict=false
         check_conflict "$HOME/.claude/agents" "$ICLOUD_DIR/claude/agents" "Claude agents" || has_conflict=true
         check_conflict "$HOME/.claude/skills" "$ICLOUD_DIR/claude/skills" "Claude skills" || has_conflict=true
+        check_conflict "$HOME/.claude/hooks" "$ICLOUD_DIR/claude/hooks" "Claude hooks" || has_conflict=true
+        check_conflict "$HOME/.claude/hud" "$ICLOUD_DIR/claude/hud" "Claude HUD" || has_conflict=true
+        check_conflict "$HOME/.claude/CLAUDE.md" "$ICLOUD_DIR/claude/CLAUDE.md" "Claude CLAUDE.md" || has_conflict=true
+        check_conflict "$HOME/.claude/.mcp.json" "$ICLOUD_DIR/claude/mcp.json" "Claude MCP config" || has_conflict=true
         check_conflict "$HOME/.codex/skills" "$ICLOUD_DIR/codex/skills" "Codex skills" || has_conflict=true
         check_conflict "$HOME/.claude/settings.json" "$ICLOUD_DIR/claude/settings.json" "Claude settings.json" || has_conflict=true
         check_conflict "$HOME/.claude-code-router/config.json" "$ICLOUD_DIR/ccr/config.json" "CCR config" || has_conflict=true
@@ -273,7 +281,7 @@ capture() {
         fi
     fi
 
-    mkdir -p "$ICLOUD_DIR"/{claude/{agents,skills},codex/skills,ccr,opencode/{agent,plugin,superpowers},vscode,iterm2}
+    mkdir -p "$ICLOUD_DIR"/{claude/{agents,skills,hooks,hud},codex/skills,ccr,opencode/{agent,plugin,superpowers},vscode,iterm2}
 
     # Claude Code agents
     if [[ -d "$HOME/.claude/agents" ]] && [[ ! -L "$HOME/.claude/agents" ]]; then
@@ -285,6 +293,30 @@ capture() {
     if [[ -d "$HOME/.claude/skills" ]] && [[ ! -L "$HOME/.claude/skills" ]]; then
         rsync -av --delete "$HOME/.claude/skills/" "$ICLOUD_DIR/claude/skills/"
         log_ok "Claude skills → iCloud"
+    fi
+
+    # Claude Code hooks
+    if [[ -d "$HOME/.claude/hooks" ]] && [[ ! -L "$HOME/.claude/hooks" ]]; then
+        rsync -av --delete "$HOME/.claude/hooks/" "$ICLOUD_DIR/claude/hooks/"
+        log_ok "Claude hooks → iCloud"
+    fi
+
+    # Claude Code HUD
+    if [[ -d "$HOME/.claude/hud" ]] && [[ ! -L "$HOME/.claude/hud" ]]; then
+        rsync -av --delete "$HOME/.claude/hud/" "$ICLOUD_DIR/claude/hud/"
+        log_ok "Claude HUD → iCloud"
+    fi
+
+    # Claude Code CLAUDE.md
+    if [[ -f "$HOME/.claude/CLAUDE.md" ]] && [[ ! -L "$HOME/.claude/CLAUDE.md" ]]; then
+        cp "$HOME/.claude/CLAUDE.md" "$ICLOUD_DIR/claude/CLAUDE.md"
+        log_ok "Claude CLAUDE.md → iCloud"
+    fi
+
+    # Claude Code MCP config
+    if [[ -f "$HOME/.claude/.mcp.json" ]] && [[ ! -L "$HOME/.claude/.mcp.json" ]]; then
+        cp "$HOME/.claude/.mcp.json" "$ICLOUD_DIR/claude/mcp.json"
+        log_ok "Claude MCP config → iCloud"
     fi
 
     # Codex skills
@@ -409,6 +441,70 @@ apply() {
             fi
         else
             log_ok "Claude skills already symlinked"
+        fi
+    fi
+
+    # Claude hooks (create symlink)
+    if [[ -d "$ICLOUD_DIR/claude/hooks" ]]; then
+        if [[ ! -L "$HOME/.claude/hooks" ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -d "$HOME/.claude/hooks" ]] && log_info "[DRY-RUN] Would backup: ~/.claude/hooks → ~/.claude/hooks.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.claude/hooks → $ICLOUD_DIR/claude/hooks"
+            else
+                [[ -d "$HOME/.claude/hooks" ]] && mv "$HOME/.claude/hooks" "$HOME/.claude/hooks.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/claude/hooks" "$HOME/.claude/hooks"
+                log_ok "Claude hooks ← iCloud (symlinked)"
+            fi
+        else
+            log_ok "Claude hooks already symlinked"
+        fi
+    fi
+
+    # Claude HUD (create symlink)
+    if [[ -d "$ICLOUD_DIR/claude/hud" ]]; then
+        if [[ ! -L "$HOME/.claude/hud" ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -d "$HOME/.claude/hud" ]] && log_info "[DRY-RUN] Would backup: ~/.claude/hud → ~/.claude/hud.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.claude/hud → $ICLOUD_DIR/claude/hud"
+            else
+                [[ -d "$HOME/.claude/hud" ]] && mv "$HOME/.claude/hud" "$HOME/.claude/hud.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/claude/hud" "$HOME/.claude/hud"
+                log_ok "Claude HUD ← iCloud (symlinked)"
+            fi
+        else
+            log_ok "Claude HUD already symlinked"
+        fi
+    fi
+
+    # Claude CLAUDE.md (create symlink)
+    if [[ -f "$ICLOUD_DIR/claude/CLAUDE.md" ]]; then
+        if [[ ! -L "$HOME/.claude/CLAUDE.md" ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -f "$HOME/.claude/CLAUDE.md" ]] && log_info "[DRY-RUN] Would backup: CLAUDE.md → CLAUDE.md.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.claude/CLAUDE.md → $ICLOUD_DIR/claude/CLAUDE.md"
+            else
+                [[ -f "$HOME/.claude/CLAUDE.md" ]] && mv "$HOME/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+                log_ok "Claude CLAUDE.md ← iCloud (symlinked)"
+            fi
+        else
+            log_ok "Claude CLAUDE.md already symlinked"
+        fi
+    fi
+
+    # Claude MCP config (create symlink)
+    if [[ -f "$ICLOUD_DIR/claude/mcp.json" ]]; then
+        if [[ ! -L "$HOME/.claude/.mcp.json" ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -f "$HOME/.claude/.mcp.json" ]] && log_info "[DRY-RUN] Would backup: .mcp.json → .mcp.json.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.claude/.mcp.json → $ICLOUD_DIR/claude/mcp.json"
+            else
+                [[ -f "$HOME/.claude/.mcp.json" ]] && mv "$HOME/.claude/.mcp.json" "$HOME/.claude/.mcp.json.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/claude/mcp.json" "$HOME/.claude/.mcp.json"
+                log_ok "Claude MCP config ← iCloud (symlinked)"
+            fi
+        else
+            log_ok "Claude MCP config already symlinked"
         fi
     fi
 
@@ -601,6 +697,58 @@ diff_configs() {
             echo ""
             log_info "Claude skills:"
             if diff -rq "$HOME/.claude/skills" "$ICLOUD_DIR/claude/skills" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
+    # Claude hooks
+    if [[ -d "$HOME/.claude/hooks" ]] && [[ ! -L "$HOME/.claude/hooks" ]]; then
+        if [[ -d "$ICLOUD_DIR/claude/hooks" ]]; then
+            echo ""
+            log_info "Claude hooks:"
+            if diff -rq "$HOME/.claude/hooks" "$ICLOUD_DIR/claude/hooks" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
+    # Claude HUD
+    if [[ -d "$HOME/.claude/hud" ]] && [[ ! -L "$HOME/.claude/hud" ]]; then
+        if [[ -d "$ICLOUD_DIR/claude/hud" ]]; then
+            echo ""
+            log_info "Claude HUD:"
+            if diff -rq "$HOME/.claude/hud" "$ICLOUD_DIR/claude/hud" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
+    # Claude CLAUDE.md
+    if [[ -f "$HOME/.claude/CLAUDE.md" ]] && [[ ! -L "$HOME/.claude/CLAUDE.md" ]]; then
+        if [[ -f "$ICLOUD_DIR/claude/CLAUDE.md" ]]; then
+            echo ""
+            log_info "Claude CLAUDE.md:"
+            if diff -q "$HOME/.claude/CLAUDE.md" "$ICLOUD_DIR/claude/CLAUDE.md" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
+    # Claude MCP config
+    if [[ -f "$HOME/.claude/.mcp.json" ]] && [[ ! -L "$HOME/.claude/.mcp.json" ]]; then
+        if [[ -f "$ICLOUD_DIR/claude/mcp.json" ]]; then
+            echo ""
+            log_info "Claude MCP config:"
+            if diff -q "$HOME/.claude/.mcp.json" "$ICLOUD_DIR/claude/mcp.json" 2>/dev/null; then
                 echo "  (identical)"
             else
                 has_diff=true
