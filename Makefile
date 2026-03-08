@@ -1,4 +1,4 @@
-.PHONY: help bootstrap apply update diff status edit doctor icloud-capture icloud-apply icloud-status lint
+.PHONY: help bootstrap apply update diff status edit doctor icloud-capture icloud-apply icloud-status icloud-health lint
 
 help: ## 顯示可用指令
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -32,6 +32,9 @@ icloud-apply: ## iCloud 設定 → 本地
 
 icloud-status: ## 顯示 iCloud 同步狀態
 	@bash scripts/icloud-sync.sh status
+
+icloud-health: ## iCloud symlink 深度健康檢查
+	@bash scripts/icloud-sync.sh health
 
 lint: ## 執行 shellcheck 檢查腳本
 	@shellcheck scripts/*.sh install.sh || true

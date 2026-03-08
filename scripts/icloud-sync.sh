@@ -19,11 +19,190 @@ ICLOUD_DIR="$HOME/Library/Mobile Documents/com~apple~CloudDocs/dotfiles-shared"
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+RED='\033[0;31m'
 NC='\033[0m'
 
 log_ok()   { echo -e "${GREEN}✓${NC} $1"; }
 log_warn() { echo -e "${YELLOW}⚠${NC} $1"; }
+log_err()  { echo -e "${RED}✗${NC} $1"; }
 log_info() { echo -e "${BLUE}ℹ${NC} $1"; }
+
+# ===== Symlink 註冊表 =====
+# 格式: 路徑|類型(dir/file)|顯示名稱
+SYMLINK_REGISTRY=(
+    "$HOME/.claude/agents|dir|Claude agents"
+    "$HOME/.claude/skills|dir|Claude skills"
+    "$HOME/.codex/skills|dir|Codex skills"
+    "$HOME/.claude-code-router/config.json|file|CCR config"
+    "$HOME/.config/opencode/oh-my-opencode.json|file|OpenCode config"
+    "$HOME/.config/opencode/agent|dir|OpenCode agents"
+    "$HOME/.config/opencode/plugin|dir|OpenCode plugin"
+    "$HOME/.config/opencode/superpowers|dir|OpenCode superpowers"
+    "$HOME/.opencode-providers.json|file|OpenCode providers"
+)
+
+# ===== 健康檢查單項 =====
+check_symlink_health() {
+    local path="$1"
+    local type="$2"
+    local name="$3"
+
+    # 1. 是否為 symlink
+    if [[ ! -L "$path" ]]; then
+        if [[ -e "$path" ]]; then
+            log_warn "$name: 存在但非 symlink ($path)"
+            suggest_fix "not_symlink" "$name" "$path"
+        else
+            log_err "$name: 不存在 ($path)"
+            suggest_fix "not_exist" "$name" "$path"
+        fi
+        return 1
+    fi
+
+    # 2. symlink 目標是否存在（dangling check）
+    if [[ ! -e "$path" ]]; then
+        log_err "$name: symlink 斷鏈 (目標不存在)"
+        suggest_fix "dangling" "$name" "$path"
+        return 1
+    fi
+
+    # 3. 目標是否有內容
+    if [[ "$type" == "dir" ]]; then
+        if [[ -z "$(ls -A "$path" 2>/dev/null)" ]]; then
+            log_err "$name: symlink 目標為空目錄"
+            suggest_fix "empty_dir" "$name" "$path"
+            return 1
+        fi
+    elif [[ "$type" == "file" ]]; then
+        if [[ ! -s "$path" ]]; then
+            log_err "$name: symlink 目標為空檔案"
+            suggest_fix "empty_file" "$name" "$path"
+            return 1
+        fi
+    fi
+
+    # 4. 檢查 iCloud stub（.*.icloud 表示尚未下載）
+    local target
+    target="$(readlink "$path")"
+    if [[ "$type" == "dir" ]]; then
+        if find "$target" -maxdepth 1 -name ".*.icloud" 2>/dev/null | head -1 | grep -q .; then
+            log_warn "$name: iCloud 尚有檔案未下載完成"
+            suggest_fix "icloud_stub" "$name" "$path"
+            return 1
+        fi
+    elif [[ "$type" == "file" ]]; then
+        local target_dir target_base
+        target_dir="$(dirname "$target")"
+        target_base="$(basename "$target")"
+        if [[ -f "$target_dir/.${target_base}.icloud" ]]; then
+            log_warn "$name: iCloud 檔案未下載完成 (stub)"
+            suggest_fix "icloud_stub" "$name" "$path"
+            return 1
+        fi
+    fi
+
+    log_ok "$name: 正常"
+    return 0
+}
+
+# ===== macOS 通知 =====
+notify_health_failure() {
+    local message="$1"
+    if command -v osascript &>/dev/null; then
+        osascript -e "display notification \"$message\" with title \"iCloud Sync Health\" subtitle \"Symlink 問題\"" 2>/dev/null || true
+    fi
+}
+
+# ===== 修復建議 =====
+suggest_fix() {
+    local issue="$1"
+    local name="$2"
+    local path="$3"
+    case "$issue" in
+        dangling)
+            echo "  修復: 執行 'icloud-sync.sh apply' 重建 symlink，或檢查 iCloud 是否同步完成"
+            ;;
+        empty_dir)
+            echo "  修復: 確認 iCloud 已同步完成，或從其他機器執行 'icloud-sync.sh capture' 推送內容"
+            ;;
+        empty_file)
+            echo "  修復: 確認 iCloud 已同步完成，或從其他機器執行 'icloud-sync.sh capture'"
+            ;;
+        not_symlink)
+            echo "  修復: 執行 'icloud-sync.sh apply' 將本地目錄轉為 symlink"
+            ;;
+        not_exist)
+            echo "  修復: 執行 'icloud-sync.sh apply' 建立 symlink"
+            ;;
+        icloud_stub)
+            echo "  修復: 開啟 Finder 瀏覽 iCloud 目錄，觸發下載；或執行 'brctl download $path'"
+            ;;
+        missing_node_modules)
+            echo "  修復: 執行 'icloud-sync.sh apply' 自動建立 node_modules symlink"
+            ;;
+    esac
+}
+
+# ===== Health: 深度健康檢查 =====
+health() {
+    echo "=== iCloud Symlink Health Check ==="
+    echo ""
+
+    local errors=0
+    local warnings=0
+    local failed_items=()
+
+    for entry in "${SYMLINK_REGISTRY[@]}"; do
+        IFS='|' read -r path type name <<< "$entry"
+        if ! check_symlink_health "$path" "$type" "$name"; then
+            ((errors++))
+            failed_items+=("$name")
+        fi
+    done
+
+    # OpenCode 特殊檢查: node_modules 依賴
+    echo ""
+    log_info "OpenCode node_modules 檢查:"
+    local sp_nm="$HOME/.config/opencode/superpowers"
+    if [[ -L "$sp_nm" ]] && [[ -e "$sp_nm" ]]; then
+        local sp_target
+        sp_target="$(readlink "$sp_nm")"
+        if [[ -d "$sp_target/.opencode/plugin" ]]; then
+            if [[ ! -e "$sp_target/.opencode/node_modules" ]]; then
+                log_err "OpenCode superpowers: 缺少 node_modules (plugin 無法運作)"
+                suggest_fix "missing_node_modules" "OpenCode node_modules" "$sp_target"
+                ((errors++))
+                failed_items+=("OpenCode node_modules")
+            else
+                log_ok "OpenCode superpowers: node_modules 存在"
+            fi
+        fi
+    fi
+
+    echo ""
+    echo "---"
+
+    # 寫入 log
+    local log_dir="$HOME/.local/log/dotfiles"
+    mkdir -p "$log_dir"
+    local log_file="$log_dir/icloud-health.log"
+    local timestamp
+    timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+
+    if [[ "$errors" -gt 0 ]]; then
+        local summary="${errors} 個 symlink 異常: $(IFS=', '; echo "${failed_items[*]}")"
+        echo "$timestamp FAIL $summary" >> "$log_file"
+        log_err "$summary"
+        echo ""
+        log_info "快速修復: icloud-sync.sh apply (重建 symlink)"
+        notify_health_failure "${summary}。執行 icloud-sync.sh apply 修復"
+        return 1
+    else
+        echo "$timestamp OK 所有 symlink 正常" >> "$log_file"
+        log_ok "所有 symlink 健康正常"
+        return 0
+    fi
+}
 
 # ===== iCloud 可用性檢查 =====
 check_icloud_ready() {
@@ -364,10 +543,31 @@ apply() {
         fi
     fi
 
+    # OpenCode superpowers node_modules 依賴修復
+    if [[ -d "$ICLOUD_DIR/opencode/superpowers/.opencode/plugin" ]]; then
+        if [[ ! -e "$ICLOUD_DIR/opencode/superpowers/.opencode/node_modules" ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                log_info "[DRY-RUN] Would symlink: superpowers node_modules → ~/.config/opencode/node_modules"
+            else
+                if [[ -d "$HOME/.config/opencode/node_modules" ]]; then
+                    ln -sf "$HOME/.config/opencode/node_modules" \
+                        "$ICLOUD_DIR/opencode/superpowers/.opencode/node_modules"
+                    log_ok "OpenCode superpowers node_modules ← local (symlinked)"
+                else
+                    log_warn "OpenCode node_modules 不存在，跳過 superpowers 依賴修復"
+                fi
+            fi
+        fi
+    fi
+
     if [[ "$dry_run" == "true" ]]; then
         log_ok "[DRY-RUN] Apply preview complete!"
     else
         log_ok "Apply complete!"
+
+        # Apply 後自動執行健康檢查
+        echo ""
+        health || true
     fi
 }
 
@@ -507,7 +707,7 @@ diff_configs() {
     fi
 }
 
-# ===== Status: 顯示同步狀態 =====
+# ===== Status: 顯示同步狀態（含健康檢查）=====
 status() {
     echo "=== iCloud Sync Status ==="
     echo ""
@@ -564,59 +764,24 @@ status() {
     echo ""
     echo "Local symlinks:"
 
-    if [[ -L "$HOME/.claude/agents" ]]; then
-        log_ok "~/.claude/agents → iCloud"
-    else
-        log_warn "~/.claude/agents (not symlinked)"
-    fi
-
-    if [[ -L "$HOME/.claude/skills" ]]; then
-        log_ok "~/.claude/skills → iCloud"
-    else
-        log_warn "~/.claude/skills (not symlinked)"
-    fi
-
-    if [[ -L "$HOME/.codex/skills" ]]; then
-        log_ok "~/.codex/skills → iCloud"
-    else
-        log_warn "~/.codex/skills (not symlinked)"
-    fi
-
-    if [[ -L "$HOME/.config/opencode/oh-my-opencode.json" ]]; then
-        log_ok "~/.config/opencode/oh-my-opencode.json → iCloud"
-    else
-        log_warn "OpenCode config (not symlinked)"
-    fi
-
-    if [[ -L "$HOME/.config/opencode/agent" ]]; then
-        log_ok "~/.config/opencode/agent → iCloud"
-    else
-        log_warn "OpenCode agents (not symlinked)"
-    fi
-
-    if [[ -L "$HOME/.config/opencode/plugin" ]]; then
-        log_ok "~/.config/opencode/plugin → iCloud"
-    else
-        log_warn "OpenCode plugin (not symlinked)"
-    fi
-
-    if [[ -L "$HOME/.config/opencode/superpowers" ]]; then
-        log_ok "~/.config/opencode/superpowers → iCloud"
-    else
-        log_warn "OpenCode superpowers (not symlinked)"
-    fi
-
-    if [[ -L "$HOME/.claude-code-router/config.json" ]]; then
-        log_ok "~/.claude-code-router/config.json → iCloud"
-    elif [[ -f "$HOME/.claude-code-router/config.json" ]]; then
-        log_warn "~/.claude-code-router/config.json (not symlinked)"
-    fi
-
-    if [[ -L "$HOME/.opencode-providers.json" ]]; then
-        log_ok "~/.opencode-providers.json → iCloud"
-    elif [[ -f "$HOME/.opencode-providers.json" ]]; then
-        log_warn "~/.opencode-providers.json (not symlinked)"
-    fi
+    # 使用統一註冊表做深度檢查
+    for entry in "${SYMLINK_REGISTRY[@]}"; do
+        IFS='|' read -r path type name <<< "$entry"
+        local display_path="${path/#$HOME/~}"
+        if [[ -L "$path" ]]; then
+            if [[ ! -e "$path" ]]; then
+                log_err "$display_path → iCloud (斷鏈!)"
+            elif [[ "$type" == "dir" && -z "$(ls -A "$path" 2>/dev/null)" ]]; then
+                log_warn "$display_path → iCloud (目標為空)"
+            elif [[ "$type" == "file" && ! -s "$path" ]]; then
+                log_warn "$display_path → iCloud (檔案為空)"
+            else
+                log_ok "$display_path → iCloud"
+            fi
+        elif [[ -e "$path" ]]; then
+            log_warn "$display_path (not symlinked)"
+        fi
+    done
 
     # iTerm2 native sync (not symlink, uses PrefsCustomFolder)
     local iterm_folder
@@ -638,6 +803,7 @@ case "${1:-status}" in
     apply)    shift; apply "$@" ;;
     diff)     diff_configs ;;
     status)   status ;;
+    health)   health ;;
     *)
         echo "Usage: icloud-sync.sh [command] [options]"
         echo ""
@@ -646,6 +812,7 @@ case "${1:-status}" in
         echo "  apply [-n|--dry-run]   — 從 iCloud 同步設定到本地"
         echo "  diff                   — 顯示本地與 iCloud 的差異"
         echo "  status                 — 顯示同步狀態"
+        echo "  health                 — 深度健康檢查（驗證 symlink 目標可用性）"
         echo ""
         echo "Options:"
         echo "  --force         (capture) 強制覆蓋，即使 iCloud 版本較新"
