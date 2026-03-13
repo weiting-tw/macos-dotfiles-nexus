@@ -173,11 +173,16 @@ for entry in "${MISSING[@]}"; do
 
         if [[ -n "$ATTACH_ID" ]]; then
             echo "  下載 $FILENAME..."
-            bw get attachment "$ATTACH_ID" --itemid "$ITEM_ID" --output "$TMPDIR/$FILENAME" &>/dev/null
-            if [[ -f "$TMPDIR/$FILENAME" ]]; then
-                echo "  匯入 $FILENAME..."
-                gpg --import "$TMPDIR/$FILENAME" 2>/dev/null
+            if bw get attachment "$ATTACH_ID" --itemid "$ITEM_ID" --output "$TMPDIR/$FILENAME" 2>/dev/null; then
+                if [[ -f "$TMPDIR/$FILENAME" ]]; then
+                    echo "  匯入 $FILENAME..."
+                    gpg --import "$TMPDIR/$FILENAME" 2>&1 || echo "  ⚠ $FILENAME 匯入時發生警告"
+                fi
+            else
+                echo "  ✗ $FILENAME 下載失敗"
             fi
+        else
+            echo "  ⚠ 找不到附件 $FILENAME"
         fi
     done
 
