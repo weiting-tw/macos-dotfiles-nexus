@@ -26,17 +26,17 @@ cat > "$CHEZMOI_PLIST" << PLIST
         <string>/bin/bash -c '
 LOGFILE="${LOG_DIR}/chezmoi-update.out.log"
 ${CHEZMOI_BIN} update --no-tty 2&gt;&amp;1
-EXIT_CODE=$?
-if [ $EXIT_CODE -ne 0 ]; then
-  CONFLICTS=$(grep "has changed since chezmoi last wrote it" "$LOGFILE" 2&gt;/dev/null | sed "s/ has changed.*//" | sort -u | head -3)
-  if [ -n "$CONFLICTS" ]; then
-    MSG="檔案衝突: ${CONFLICTS}. 請執行: chezmoi diff 查看差異, chezmoi apply --force 強制覆蓋"
+EC=\$?
+if [ \$EC -ne 0 ]; then
+  CF=\$(grep "has changed since chezmoi last wrote it" "\$LOGFILE" 2&gt;/dev/null | sed "s/ has changed.*//" | sort -u | head -3)
+  if [ -n "\$CF" ]; then
+    MSG="檔案衝突: \$CF. 請執行: chezmoi diff 查看差異, chezmoi apply --force 強制覆蓋"
   else
-    MSG="更新失敗，請查看 $LOGFILE"
+    MSG="更新失敗，請查看 \$LOGFILE"
   fi
-  osascript -e "display notification \"$MSG\" with title \"Dotfiles Sync\" subtitle \"chezmoi update 失敗\""
+  osascript -e "display notification \"\$MSG\" with title \"Dotfiles Sync\" subtitle \"chezmoi update 失敗\""
 fi
-exit $EXIT_CODE
+exit \$EC
 '</string>
     </array>
     <key>StartInterval</key>
@@ -74,11 +74,11 @@ if [[ -f "$ICLOUD_SYNC" ]]; then
         <string>-c</string>
         <string>/bin/bash -c '
 ${ICLOUD_SYNC} capture 2&gt;&amp;1
-EXIT_CODE=$?
-if [ $EXIT_CODE -ne 0 ]; then
+EC=\$?
+if [ \$EC -ne 0 ]; then
   osascript -e "display notification \"capture 失敗，請執行: icloud-sync.sh status 檢查 symlink 狀態\" with title \"Dotfiles Sync\" subtitle \"iCloud capture 失敗\""
 fi
-exit $EXIT_CODE
+exit \$EC
 '</string>
     </array>
     <key>StartInterval</key>
