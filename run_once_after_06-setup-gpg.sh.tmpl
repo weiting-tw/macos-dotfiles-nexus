@@ -206,6 +206,24 @@ else
     show_manual_instructions
 fi
 
+# 驗證簽名功能
+if [[ $IMPORTED -gt 0 ]]; then
+    echo ""
+    echo "===== GPG 簽名測試 ====="
+    for entry in "${GPG_KEYS[@]}"; do
+        IFS='|' read -r key_id name purpose <<< "$entry"
+        if gpg --list-secret-keys "$key_id" &>/dev/null; then
+            TEST_RESULT=$(echo "test" | gpg --local-user "$key_id" --sign --armor 2>&1)
+            if echo "$TEST_RESULT" | grep -q "BEGIN PGP MESSAGE"; then
+                echo "✓ $name ($key_id) 簽名測試通過"
+            else
+                echo "✗ $name ($key_id) 簽名測試失敗"
+                echo "  $TEST_RESULT"
+            fi
+        fi
+    done
+fi
+
 echo ""
-echo "✓ GPG setup check complete"
+echo "✓ GPG setup complete"
 {{ end -}}
