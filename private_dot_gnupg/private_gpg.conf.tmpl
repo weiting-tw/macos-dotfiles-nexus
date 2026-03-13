@@ -1,0 +1,6 @@
+auto-key-retrieve
+no-emit-version
+no-tty
+{{- if env "GPG_DEFAULT_KEY" }}
+default-key {{ env "GPG_DEFAULT_KEY" }}
+{{- end }}
