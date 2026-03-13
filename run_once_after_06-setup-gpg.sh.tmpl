@@ -81,15 +81,38 @@ esac
 # 登入/解鎖
 BW_STATUS=$(bw status 2>/dev/null | jq -r '.status' 2>/dev/null || echo "unauthenticated")
 
+show_manual_instructions() {
+    echo ""
+    echo "請先手動登入 Bitwarden CLI 後重新執行："
+    echo "  bw login"
+    echo "  export BW_SESSION=\$(bw unlock --raw)"
+    echo "  chezmoi apply"
+    echo ""
+    echo "或手動匯入 GPG key："
+    for entry in "${MISSING[@]}"; do
+        IFS='|' read -r key_id name purpose <<< "$entry"
+        echo "  gpg --import ${purpose}.asc"
+        echo "  gpg --import ${purpose}-public.asc"
+        echo "  gpg --edit-key ${key_id} trust    # 選擇 5 (ultimate)"
+    done
+}
+
 if [[ "$BW_STATUS" == "unauthenticated" ]]; then
     echo ""
     echo "請登入 Bitwarden："
-    BW_SESSION=$(bw login --raw) || { echo "✗ 登入失敗"; exit 1; }
+    if ! bw login; then
+        echo "✗ 登入失敗"
+        show_manual_instructions
+        exit 0
+    fi
+    echo ""
+    echo "請解鎖取得 session："
+    BW_SESSION=$(bw unlock --raw) || { echo "✗ 解鎖失敗"; show_manual_instructions; exit 0; }
     export BW_SESSION
 elif [[ "$BW_STATUS" == "locked" ]]; then
     echo ""
     echo "請解鎖 Bitwarden："
-    BW_SESSION=$(bw unlock --raw) || { echo "✗ 解鎖失敗"; exit 1; }
+    BW_SESSION=$(bw unlock --raw) || { echo "✗ 解鎖失敗"; show_manual_instructions; exit 0; }
     export BW_SESSION
 else
     echo "✓ Bitwarden 已登入"
