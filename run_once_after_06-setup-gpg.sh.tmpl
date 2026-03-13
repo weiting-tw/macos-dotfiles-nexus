@@ -1,13 +1,27 @@
 {{- if eq .chezmoi.os "darwin" -}}
 #!/bin/bash
 # Setup GPG keys for git commit signing
-# Private keys stored in Bitwarden, interactive setup with CLI auto-import
+# Configuration via chezmoi data (gpg.keys) and environment variables (BW_*)
 
 set -euo pipefail
 
+{{- if not .gpg.keys }}
+echo "ℹ GPG keys 未設定（gpg.keys 為空）"
+echo "  請在 ~/.config/chezmoi/chezmoi.toml 加入："
+echo ""
+echo "  [data.gpg]"
+echo '  keys = ['
+echo '    { id = "YOUR_KEY_ID", name = "Your Name", purpose = "work" },'
+echo '  ]'
+echo ""
+echo "✓ GPG setup skipped — no keys configured"
+exit 0
+{{- end }}
+
 GPG_KEYS=(
-    "66F4FC1D|Wilber_chen (GSS)|work"
-    "19EA2E73|Weiting|personal"
+{{- range .gpg.keys }}
+    "{{ .id }}|{{ .name }}|{{ .purpose }}"
+{{- end }}
 )
 
 MISSING=()
@@ -59,27 +73,29 @@ if ! command -v bw &>/dev/null; then
     fi
 fi
 
-# 選擇 Bitwarden server
-echo ""
-echo "Bitwarden 伺服器："
-echo "  1) 官方 (bitwarden.com)"
-echo "  2) 自架 (Self-hosted)"
-read -rp "選擇 [1/2]: " BW_CHOICE
+# 設定 Bitwarden server（優先使用環境變數）
+if [[ -n "${BW_SERVER:-}" ]]; then
+    bw config server "$BW_SERVER" 2>/dev/null || true
+    echo "✓ 使用 server: $BW_SERVER（from env）"
+else
+    echo ""
+    echo "Bitwarden 伺服器："
+    echo "  1) 官方 (bitwarden.com)"
+    echo "  2) 自架 (Self-hosted)"
+    read -rp "選擇 [1/2]: " BW_CHOICE
 
-case "$BW_CHOICE" in
-    2)
-        read -rp "輸入自架伺服器 URL (例如 https://vault.example.com): " BW_SERVER
-        bw config server "$BW_SERVER" 2>/dev/null || true
-        echo "✓ 已設定 server: $BW_SERVER"
-        ;;
-    *)
-        bw config server "https://vault.bitwarden.com" 2>/dev/null || true
-        echo "✓ 使用官方 Bitwarden"
-        ;;
-esac
-
-# 登入/解鎖
-BW_STATUS=$(bw status 2>/dev/null | jq -r '.status' 2>/dev/null || echo "unauthenticated")
+    case "$BW_CHOICE" in
+        2)
+            read -rp "輸入自架伺服器 URL (例如 https://vault.example.com): " BW_INPUT_SERVER
+            bw config server "$BW_INPUT_SERVER" 2>/dev/null || true
+            echo "✓ 已設定 server: $BW_INPUT_SERVER"
+            ;;
+        *)
+            bw config server "https://vault.bitwarden.com" 2>/dev/null || true
+            echo "✓ 使用官方 Bitwarden"
+            ;;
+    esac
+fi
 
 show_manual_instructions() {
     echo ""
@@ -97,18 +113,27 @@ show_manual_instructions() {
     done
 }
 
+# 登入/解鎖（優先使用 API key）
+BW_STATUS=$(bw status 2>/dev/null | jq -r '.status' 2>/dev/null || echo "unauthenticated")
+
 if [[ "$BW_STATUS" == "unauthenticated" ]]; then
-    echo ""
-    echo "請登入 Bitwarden："
-    if ! bw login; then
-        echo "✗ 登入失敗"
-        show_manual_instructions
-        exit 0
+    if [[ -n "${BW_CLIENTID:-}" && -n "${BW_CLIENTSECRET:-}" ]]; then
+        echo "使用 API key 登入..."
+        BW_SESSION=$(bw login --apikey --raw 2>/dev/null) || { echo "✗ API key 登入失敗"; show_manual_instructions; exit 0; }
+        export BW_SESSION
+    else
+        echo ""
+        echo "請登入 Bitwarden："
+        if ! bw login; then
+            echo "✗ 登入失敗"
+            show_manual_instructions
+            exit 0
+        fi
+        echo ""
+        echo "請解鎖取得 session："
+        BW_SESSION=$(bw unlock --raw) || { echo "✗ 解鎖失敗"; show_manual_instructions; exit 0; }
+        export BW_SESSION
     fi
-    echo ""
-    echo "請解鎖取得 session："
-    BW_SESSION=$(bw unlock --raw) || { echo "✗ 解鎖失敗"; show_manual_instructions; exit 0; }
-    export BW_SESSION
 elif [[ "$BW_STATUS" == "locked" ]]; then
     echo ""
     echo "請解鎖 Bitwarden："
@@ -121,7 +146,8 @@ fi
 # 同步 vault
 bw sync &>/dev/null || true
 
-# 搜尋 GPG item 並下載附件
+# 搜尋 GPG item（優先使用環境變數指定的 item name）
+BW_SEARCH="${BW_GPG_ITEM_NAME:-GPG}"
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
@@ -132,11 +158,11 @@ for entry in "${MISSING[@]}"; do
     echo ""
     echo "搜尋 $name ($purpose) 的 GPG key..."
 
-    ITEM_ID=$(bw list items --search "GPG" 2>/dev/null | \
+    ITEM_ID=$(bw list items --search "$BW_SEARCH" 2>/dev/null | \
         jq -r --arg purpose "$purpose" '.[] | select(.attachments != null) | select(.attachments[].fileName | test($purpose; "i")) | .id' | head -1)
 
     if [[ -z "$ITEM_ID" ]]; then
-        echo "  ✗ 在 Bitwarden 中找不到 $purpose 的 GPG key 附件"
+        echo "  ✗ 在 Bitwarden 中找不到 $purpose 的 GPG key 附件（搜尋: $BW_SEARCH）"
         continue
     fi
 
@@ -172,20 +198,7 @@ elif [[ $IMPORTED -gt 0 ]]; then
     echo "⚠ 部分 GPG key 匯入成功 ($IMPORTED/${#MISSING[@]})"
 else
     echo "✗ GPG key 自動匯入失敗"
-    echo ""
-    echo "手動匯入方式："
-    echo "  1. 開啟 Bitwarden，搜尋 'GPG'"
-    echo "  2. 下載 .asc 附件後執行："
-    for entry in "${MISSING[@]}"; do
-        IFS='|' read -r key_id name purpose <<< "$entry"
-        echo "     gpg --import ${purpose}.asc"
-        echo "     gpg --import ${purpose}-public.asc"
-    done
-    echo "  3. 設定信任等級："
-    for entry in "${MISSING[@]}"; do
-        IFS='|' read -r key_id name purpose <<< "$entry"
-        echo "     gpg --edit-key ${key_id} trust    # 選擇 5 (ultimate)"
-    done
+    show_manual_instructions
 fi
 
 echo ""

@@ -43,7 +43,20 @@ chezmoi (Git)          iCloud Drive              Bitwarden
 ### 已有機器更新
 
 ```bash
-chezmoi update
+chezmoi update              # 從 Git 拉取 + 套用變更
+```
+
+如果遇到歷史不一致（force push 後）：
+
+```bash
+cd ~/.local/share/chezmoi && git fetch origin && git reset --hard origin/main && chezmoi apply
+```
+
+如果需要重新跑 setup scripts（如 GPG 匯入）：
+
+```bash
+chezmoi state delete-bucket --bucket=scriptState
+chezmoi apply
 ```
 
 ### 常用指令（Makefile）
@@ -123,33 +136,62 @@ launchctl start com.user.chezmoi-update
 
 ## GPG 簽名
 
-兩把 GPG 簽名密鑰分別用於工作與個人專案，私鑰存放在 Bitwarden。
+GPG 簽名密鑰存放在 Bitwarden，bootstrap 時自動檢測並引導匯入。
 
-| Key ID | 所有者 | 用途 | 來源 |
-|--------|--------|------|------|
-| `66F4FC1D` | Wilber_chen (GSS) | Work commits | Bitwarden: `work.asc` |
-| `19EA2E73` | Weiting | Personal commits | Bitwarden: `personal.asc` |
+**設定 GPG keys（每台機器）：**
 
-**自動設定（Bootstrap 時）：**
+在 `~/.config/chezmoi/chezmoi.toml` 加入：
 
-`06-setup-gpg.sh` 在首次安裝時自動執行互動式設定：
+```toml
+[data.git]
+    signing_key = "YOUR_KEY_ID"
 
-1. 檢測本機是否已有 GPG key
+[[data.gpg.keys]]
+    id = "YOUR_KEY_ID"
+    name = "Your Name"
+    purpose = "work"
+
+[[data.gpg.keys]]
+    id = "ANOTHER_KEY_ID"
+    name = "Personal"
+    purpose = "personal"
+```
+
+**設定 Bitwarden（可選，在 `~/.secrets`）：**
+
+```bash
+export BW_SERVER=""            # Self-hosted URL（留空 = 互動式選擇）
+export BW_CLIENTID=""          # 免互動登入用，可留空
+export BW_CLIENTSECRET=""      # 免互動登入用，可留空
+export BW_GPG_ITEM_NAME=""     # Bitwarden item 名稱（留空 = 搜尋 "GPG"）
+```
+
+**自動設定流程（Bootstrap 時）：**
+
+`06-setup-gpg.sh` 在首次安裝時自動執行：
+
+1. 檢測本機是否已有 GPG key（依據 `chezmoi.toml` 設定）
 2. 詢問是否要設定 GPG
-3. 選擇 Bitwarden 伺服器（官方 / 自架）
-4. 自架需輸入 server URL（例如 `https://vault.example.com`）
-5. 登入 Bitwarden CLI → 自動搜尋 GPG 附件 → 下載匯入 → 設定信任等級
+3. 有 `BW_SERVER` → 自動使用；沒有 → 互動式選擇（官方 / 自架）
+4. 有 `BW_CLIENTID` → API key 自動登入；沒有 → 互動式帳密 + 2FA
+5. 搜尋 Bitwarden 附件 → 下載 `.asc` → 匯入 → 設定信任等級
 
-**手動匯入：**
+**手動匯入（不使用 Bitwarden CLI）：**
 
 ```bash
 gpg --import work.asc && gpg --import work-public.asc
-gpg --edit-key 66F4FC1D trust    # 選擇 5 (ultimate)
+gpg --edit-key YOUR_KEY_ID trust    # 選擇 5 (ultimate)
 ```
 
-**前置需求：** `bitwarden-cli`（已包含在 Brewfile，自動安裝）。
+**條件簽名：** `gpgsign = true` 僅在 `chezmoi.toml` 有設定 `signing_key` 時才啟用。
 
-**條件簽名：** 簽名僅在 `~/.gitconfig` 中存在有效的 `signingkey` 時啟用，避免無簽名密鑰的機器在 commit 時失敗。
+**設定檔層級：**
+
+| 檔案 | 版控 | 用途 |
+|------|------|------|
+| `.chezmoidata.yaml` | Git | 預設值（`gpg.keys` 為空） |
+| `~/.config/chezmoi/chezmoi.toml` | 本機 | 每台機器的 GPG key 設定 |
+| `~/.secrets` | 本機 | Bitwarden 連線資訊（可選） |
 
 ## Codex MCP Wrapper
 

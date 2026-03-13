@@ -3,6 +3,18 @@ git:
   signing_key: ""  # 從環境變數 GPG_SIGNING_KEY 讀取
   gpg_program: ""
 
+gpg:
+  keys: []
+  # 範例（在 ~/.config/chezmoi/chezmoi.toml 覆寫）：
+  # [[gpg.keys]]
+  # id = "66F4FC1D"
+  # name = "Your Name"
+  # purpose = "work"
+  # [[gpg.keys]]
+  # id = "19EA2E73"
+  # name = "Personal"
+  # purpose = "personal"
+
 ssh:
   bitwarden_agent_sock: "~/.bitwarden-ssh-agent.sock"
   github_pubkey: "id_ed25519.pub"
