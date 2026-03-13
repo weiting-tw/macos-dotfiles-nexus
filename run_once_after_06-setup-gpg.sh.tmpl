@@ -5,6 +5,46 @@
 
 set -euo pipefail
 
+# 確保 gpg-agent 在跑（多重嘗試）
+start_gpg_agent() {
+    # 方法 1: gpgconf --launch
+    gpgconf --launch gpg-agent 2>/dev/null && return 0
+
+    # 方法 2: kill + launch
+    echo "⚠ gpg-agent 啟動失敗，嘗試重啟..."
+    gpgconf --kill gpg-agent 2>/dev/null || true
+    sleep 1
+    gpgconf --launch gpg-agent 2>/dev/null && return 0
+
+    # 方法 3: 直接啟動 gpg-agent daemon
+    echo "⚠ gpgconf 無法啟動 agent，嘗試直接啟動..."
+    gpg-agent --daemon 2>/dev/null || true
+    sleep 1
+    return 0
+}
+
+start_gpg_agent
+
+# 驗證 gpg-agent 可連線
+if gpg-connect-agent /bye 2>/dev/null; then
+    echo "✓ gpg-agent 已就緒"
+else
+    echo "⚠ gpg-agent 仍無法連線，嘗試最後手段..."
+    # 清除舊 socket 並重新啟動
+    GPG_SOCK_DIR="$(gpgconf --list-dirs socketdir 2>/dev/null || echo "$HOME/.gnupg")"
+    rm -f "$GPG_SOCK_DIR"/S.gpg-agent* 2>/dev/null || true
+    gpgconf --kill gpg-agent 2>/dev/null || true
+    sleep 1
+    gpgconf --launch gpg-agent 2>/dev/null || gpg-agent --daemon 2>/dev/null || true
+    sleep 1
+    if gpg-connect-agent /bye 2>/dev/null; then
+        echo "✓ gpg-agent 已就緒（重建 socket 後）"
+    else
+        echo "✗ gpg-agent 無法啟動，私鑰匯入可能會失敗"
+        echo "  請手動執行: gpg-agent --daemon"
+    fi
+fi
+
 {{- if not .gpg.keys }}
 echo "ℹ GPG keys 未設定（gpg.keys 為空）"
 echo "  請在 ~/.config/chezmoi/chezmoi.toml 加入："
