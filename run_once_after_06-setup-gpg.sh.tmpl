@@ -76,7 +76,7 @@ fi
 # 設定 Bitwarden server（優先使用環境變數）
 if [[ -n "${BW_SERVER:-}" ]]; then
     bw config server "$BW_SERVER" 2>/dev/null || true
-    echo "✓ 使用 server: $BW_SERVER（from env）"
+    echo "✓ 使用 server: ${BW_SERVER} (from env)"
 else
     echo ""
     echo "Bitwarden 伺服器："
