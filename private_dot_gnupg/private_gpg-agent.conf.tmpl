@@ -2,9 +2,6 @@ default-cache-ttl 0
 max-cache-ttl 600
 default-cache-ttl-ssh 0
 max-cache-ttl-ssh 0
-auto-key-retrieve
-no-emit-version
-no-tty
 {{- if env "GPG_DEFAULT_KEY" }}
 default-key {{ env "GPG_DEFAULT_KEY" }}
 {{- end }}
