@@ -26,3 +26,14 @@ log/
 .claude/todos/
 .claude/statsig/
 *.csproj.DotSettings
+
+.claude
+
+# oh-my-claudecode
+.omc
+
+# MAGI 分析結果
+.magi/
+
+# firecrawl
+.firecrawl

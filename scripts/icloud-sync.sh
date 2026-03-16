@@ -36,6 +36,7 @@ SYMLINK_REGISTRY=(
     "$HOME/.claude/hud|dir|Claude HUD"
     "$HOME/.claude/CLAUDE.md|file|Claude CLAUDE.md"
     "$HOME/.claude/.mcp.json|file|Claude MCP config"
+    "$HOME/.claude/settings.json|file|Claude settings"
     "$HOME/.codex/skills|dir|Codex skills"
     "$HOME/.claude-code-router/config.json|file|CCR config"
     "$HOME/.config/opencode/oh-my-opencode.json|file|OpenCode config"
@@ -326,7 +327,7 @@ capture() {
     fi
 
     # Claude Code settings.json
-    if [[ -f "$HOME/.claude/settings.json" ]]; then
+    if [[ -f "$HOME/.claude/settings.json" ]] && [[ ! -L "$HOME/.claude/settings.json" ]]; then
         cp "$HOME/.claude/settings.json" "$ICLOUD_DIR/claude/settings.json"
         log_ok "Claude settings.json → iCloud"
     fi
@@ -505,6 +506,22 @@ apply() {
             fi
         else
             log_ok "Claude MCP config already symlinked"
+        fi
+    fi
+
+    # Claude settings.json (create symlink)
+    if [[ -f "$ICLOUD_DIR/claude/settings.json" ]]; then
+        if [[ ! -L "$HOME/.claude/settings.json" ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -f "$HOME/.claude/settings.json" ]] && log_info "[DRY-RUN] Would backup: settings.json → settings.json.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.claude/settings.json → $ICLOUD_DIR/claude/settings.json"
+            else
+                [[ -f "$HOME/.claude/settings.json" ]] && mv "$HOME/.claude/settings.json" "$HOME/.claude/settings.json.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/claude/settings.json" "$HOME/.claude/settings.json"
+                log_ok "Claude settings.json ← iCloud (symlinked)"
+            fi
+        else
+            log_ok "Claude settings.json already symlinked"
         fi
     fi
 
@@ -783,7 +800,7 @@ diff_configs() {
     fi
 
     # Claude settings.json
-    if [[ -f "$HOME/.claude/settings.json" ]]; then
+    if [[ -f "$HOME/.claude/settings.json" ]] && [[ ! -L "$HOME/.claude/settings.json" ]]; then
         if [[ -f "$ICLOUD_DIR/claude/settings.json" ]]; then
             echo ""
             log_info "Claude settings.json:"
