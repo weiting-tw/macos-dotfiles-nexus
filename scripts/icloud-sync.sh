@@ -44,6 +44,7 @@ SYMLINK_REGISTRY=(
     "$HOME/.config/opencode/plugin|dir|OpenCode plugin"
     "$HOME/.config/opencode/superpowers|dir|OpenCode superpowers"
     "$HOME/.opencode-providers.json|file|OpenCode providers"
+    "$HOME/Library/Application Support/Beyond Compare 5|dir|Beyond Compare 5"
 )
 
 # ===== 健康檢查單項 =====
@@ -275,6 +276,7 @@ capture() {
         check_conflict "$HOME/.config/opencode/agent" "$ICLOUD_DIR/opencode/agent" "OpenCode agents" || has_conflict=true
         check_conflict "$HOME/.config/opencode/plugin" "$ICLOUD_DIR/opencode/plugin" "OpenCode plugin" || has_conflict=true
         check_conflict "$HOME/.config/opencode/superpowers" "$ICLOUD_DIR/opencode/superpowers" "OpenCode superpowers" || has_conflict=true
+        check_conflict "$HOME/Library/Application Support/Beyond Compare 5" "$ICLOUD_DIR/bcompare5" "Beyond Compare 5" || has_conflict=true
 
         if [[ "$has_conflict" == "true" ]]; then
             log_warn "發現衝突，capture 中止"
@@ -282,7 +284,7 @@ capture() {
         fi
     fi
 
-    mkdir -p "$ICLOUD_DIR"/{claude/{agents,skills,hooks,hud},codex/skills,ccr,opencode/{agent,plugin,superpowers},vscode,iterm2}
+    mkdir -p "$ICLOUD_DIR"/{claude/{agents,skills,hooks,hud},codex/skills,ccr,opencode/{agent,plugin,superpowers},vscode,iterm2,bcompare5}
 
     # Claude Code agents
     if [[ -d "$HOME/.claude/agents" ]] && [[ ! -L "$HOME/.claude/agents" ]]; then
@@ -363,6 +365,12 @@ capture() {
     if [[ -f "$HOME/.opencode-providers.json" ]] && [[ ! -L "$HOME/.opencode-providers.json" ]]; then
         cp "$HOME/.opencode-providers.json" "$ICLOUD_DIR/opencode/opencode-providers.json"
         log_ok "OpenCode providers → iCloud"
+    fi
+
+    # Beyond Compare 5
+    if [[ -d "$HOME/Library/Application Support/Beyond Compare 5" ]] && [[ ! -L "$HOME/Library/Application Support/Beyond Compare 5" ]]; then
+        rsync -av --delete --exclude='*.bak' --exclude='.BCLOCK' --exclude='.DS_Store' "$HOME/Library/Application Support/Beyond Compare 5/" "$ICLOUD_DIR/bcompare5/"
+        log_ok "Beyond Compare 5 → iCloud"
     fi
 
     # VS Code extensions
@@ -631,6 +639,22 @@ apply() {
         fi
     fi
 
+    # Beyond Compare 5 (create symlink)
+    if [[ -d "$ICLOUD_DIR/bcompare5" ]]; then
+        if [[ ! -L "$HOME/Library/Application Support/Beyond Compare 5" ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -d "$HOME/Library/Application Support/Beyond Compare 5" ]] && log_info "[DRY-RUN] Would backup: Beyond Compare 5 → Beyond Compare 5.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/Library/Application Support/Beyond Compare 5 → $ICLOUD_DIR/bcompare5"
+            else
+                [[ -d "$HOME/Library/Application Support/Beyond Compare 5" ]] && mv "$HOME/Library/Application Support/Beyond Compare 5" "$HOME/Library/Application Support/Beyond Compare 5.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/bcompare5" "$HOME/Library/Application Support/Beyond Compare 5"
+                log_ok "Beyond Compare 5 ← iCloud (symlinked)"
+            fi
+        else
+            log_ok "Beyond Compare 5 already symlinked"
+        fi
+    fi
+
     # iTerm2 preferences (set native iCloud sync)
     if [[ -d "$ICLOUD_DIR/iterm2" ]]; then
         if [[ "$dry_run" == "true" ]]; then
@@ -864,6 +888,19 @@ diff_configs() {
         fi
     fi
 
+    # Beyond Compare 5
+    if [[ -d "$HOME/Library/Application Support/Beyond Compare 5" ]] && [[ ! -L "$HOME/Library/Application Support/Beyond Compare 5" ]]; then
+        if [[ -d "$ICLOUD_DIR/bcompare5" ]]; then
+            echo ""
+            log_info "Beyond Compare 5:"
+            if diff -rq "$HOME/Library/Application Support/Beyond Compare 5" "$ICLOUD_DIR/bcompare5" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+            fi
+        fi
+    fi
+
     echo ""
     if [[ "$has_diff" == "false" ]]; then
         log_ok "No differences found"
@@ -910,6 +947,9 @@ status() {
 
     [[ -d "$ICLOUD_DIR/opencode/superpowers" ]] && \
         log_info "OpenCode superpowers/ ($(ls "$ICLOUD_DIR/opencode/superpowers" 2>/dev/null | wc -l | tr -d ' ') files)"
+
+    [[ -d "$ICLOUD_DIR/bcompare5" ]] && \
+        log_info "Beyond Compare 5/ ($(ls "$ICLOUD_DIR/bcompare5" 2>/dev/null | wc -l | tr -d ' ') files)"
 
     [[ -f "$ICLOUD_DIR/ccr/config.json" ]] && \
         log_info "CCR config.json ($(stat -f '%Sm' "$ICLOUD_DIR/ccr/config.json" 2>/dev/null || echo 'unknown'))"
