@@ -202,15 +202,14 @@ alias g='gemini -y -m gemini-3-pro-preview-11-2025'
 # - 熟悉 AI 工具行為的情況下使用
 # 若需安全模式，請直接執行不帶這些 flags 的原始指令
 alias cc='claude --allow-dangerously-skip-permissions'
-# ccw = Claude Code (Work) - 使用公司 LLM API
 ccw() {
-  ANTHROPIC_BASE_URL="${WORK_ANTHROPIC_BASE_URL}" \
-  ANTHROPIC_AUTH_TOKEN="${WORK_ANTHROPIC_AUTH_TOKEN}" \
-  ANTHROPIC_DEFAULT_SONNET_MODEL="${WORK_ANTHROPIC_DEFAULT_SONNET_MODEL}" \
-  ANTHROPIC_DEFAULT_OPUS_MODEL="${WORK_ANTHROPIC_DEFAULT_OPUS_MODEL}" \
-  ANTHROPIC_DEFAULT_HAIKU_MODEL="${WORK_ANTHROPIC_DEFAULT_HAIKU_MODEL}" \
-  claude --allow-dangerously-skip-permissions "$@"
-}
+    ANTHROPIC_BASE_URL="${WORK_ANTHROPIC_BASE_URL}" \
+    ANTHROPIC_AUTH_TOKEN="${WORK_ANTHROPIC_AUTH_TOKEN}" \
+    ANTHROPIC_DEFAULT_SONNET_MODEL="${WORK_ANTHROPIC_DEFAULT_SONNET_MODEL}" \
+    ANTHROPIC_DEFAULT_OPUS_MODEL="${WORK_ANTHROPIC_DEFAULT_OPUS_MODEL}" \
+    ANTHROPIC_DEFAULT_HAIKU_MODEL="${WORK_ANTHROPIC_DEFAULT_HAIKU_MODEL}" \
+    claude --allow-dangerously-skip-permissions "$@"
+  }
 alias oc='omnara --base-url "${OMNARA_BASE_URL}" --permission-mode bypassPermissions'
 alias ocx='omnara --base-url "${OMNARA_BASE_URL}" --agent=codex --permission-mode bypassPermissions'
 {{- end }}

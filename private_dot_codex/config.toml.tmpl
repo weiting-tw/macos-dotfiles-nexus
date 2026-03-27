@@ -6,7 +6,7 @@ forced_login_method = "chatgpt"
 #forced_login_method = "chatgpt"
 {{- end }}
 
-profile="codex-max"
+profile="codex"
 
 # 可用選項："read-only" | "workspace-write" | "danger-full-access"
 # workspace-write：僅允許寫入工作目錄，較安全的預設值
@@ -39,7 +39,7 @@ model_reasoning_summary = "concise"
 
 [profiles.codex-max]
 model_provider = "azure"
-model = "gpt-5.1-codex-max"
+model = "gpt-5.4"
 model_reasoning_effort = "xhigh"
 model_reasoning_summary = "detailed"
 
@@ -80,7 +80,7 @@ model = "o3"
 model_reasoning_effort = "high"
 model_reasoning_summary = "detailed"
 
-{{ if env "AZURE_OPENAI_ENDPOINT" }}
+{{- if env "AZURE_OPENAI_ENDPOINT" }}
 [model_providers.azure]
 name = "Azure"
 base_url= "{{ env "AZURE_OPENAI_ENDPOINT" }}"
@@ -94,7 +94,7 @@ wire_api = "responses"
 [sandbox_workspace_write]
 network_access = true
 
-{{ if env "AZURE_OPENAI_ENDPOINT" }}
+{{- if env "AZURE_OPENAI_ENDPOINT" }}
 # Codex CLI sandbox 預設會過濾名稱含 KEY/SECRET/TOKEN 的環境變數
 # ignore_default_excludes = true 可停用此行為，確保 Azure API Key 能正常傳入
 [shell_environment_policy]
@@ -116,3 +116,5 @@ env = { "CONTEXT7_API_KEY" = "{{ env "CONTEXT7_API_KEY" }}" }
 command = "npx"
 args = ["-y", "gemini-mcp-tool@latest"]
 
+[projects."/Users/wilber_chen"]
+trust_level = "trusted"

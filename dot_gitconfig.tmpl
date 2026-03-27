@@ -3,8 +3,8 @@
 {{-   $bcomp = "/opt/homebrew/bin/bcomp" -}}
 {{- end -}}
 [core]
-	excludesfile = ~/.gitignore
-	autocrlf = input
+    excludesfile = ~/.gitignore
+    autocrlf = input
     filemode = false
 [difftool "sourceTree"]
     cmd = {{ $bcomp }} \"$LOCAL\" \"$REMOTE\"
@@ -56,15 +56,15 @@
     forceSignAnnotated = false
 {{- end }}
 [color]
-	diff = auto
-	status = auto
-	branch = auto
+    diff = auto
+    status = auto
+    branch = auto
 [pull]
-	rebase = true
+    rebase = true
 {{- if index . "is_work" }}
 
 [url "https://git.gss.com.tw/"]
-	insteadOf = git@git.gss.com.tw:
+    insteadOf = git@git.gss.com.tw:
 
 [includeIf "gitdir:~/work/"]
     path = ~/.gitconfig-work
