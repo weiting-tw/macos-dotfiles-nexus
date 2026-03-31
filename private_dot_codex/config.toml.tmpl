@@ -13,22 +13,16 @@ profile="codex"
 sandbox_mode = "workspace-write"
 approval_policy = "on-failure" # "untrusted" or "on-failure" or "never"
 
-[profiles.gpt-5.1]
+[profiles.codex]
 model_provider = "azure"
-model = "gpt-5.1"
+model = "gpt-5.3-codex"
 model_reasoning_effort = "high"
 model_reasoning_summary = "detailed"
 
-[profiles.gpt-5.1-mini]
+[profiles.codex-max]
 model_provider = "azure"
-model = "gpt-5.1-mini"
-model_reasoning_effort = "medium"
-model_reasoning_summary = "concise"
-
-[profiles.codex]
-model_provider = "azure"
-model = "gpt-5.1-codex"
-model_reasoning_effort = "high"
+model = "gpt-5.1-codex-max"
+model_reasoning_effort = "xhigh"
 model_reasoning_summary = "detailed"
 
 [profiles.codex-mini]
@@ -37,40 +31,21 @@ model = "gpt-5.1-codex-mini"
 model_reasoning_effort = "medium"
 model_reasoning_summary = "concise"
 
-[profiles.codex-max]
+[profiles.gpt-5.4]
 model_provider = "azure"
 model = "gpt-5.4"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles.gpt-5.4-pro]
+model_provider = "azure"
+model = "gpt-5.4-pro"
 model_reasoning_effort = "xhigh"
 model_reasoning_summary = "detailed"
 
-[profiles.gpt-5.2]
+[profiles.gpt-5.4-mini]
 model_provider = "azure"
-model = "gpt-5.2"
-model_reasoning_effort = "high"
-model_reasoning_summary = "detailed"
-
-[profiles.gpt-5.2-codex]
-model_provider = "azure"
-model = "gpt-5.2-codex"
-model_reasoning_effort = "high"
-model_reasoning_summary = "detailed"
-
-[profiles.gpt-5.3-codex]
-model_provider = "azure"
-model = "gpt-5.3-codex"
-model_reasoning_effort = "high"
-model_reasoning_summary = "detailed"
-
-[profiles.gpt-5-mini]
-model_provider = "azure"
-model = "gpt-5-mini"
-model_reasoning_effort = "medium"
-model_reasoning_summary = "concise"
-max_tokens= 950
-
-[profiles.o4-mini]
-model_provider = "azure"
-model = "o4-mini"
+model = "gpt-5.4-mini"
 model_reasoning_effort = "medium"
 model_reasoning_summary = "concise"
 
@@ -79,6 +54,18 @@ model_provider = "azure"
 model = "o3"
 model_reasoning_effort = "high"
 model_reasoning_summary = "detailed"
+
+[profiles.o3-pro]
+model_provider = "azure"
+model = "o3-pro"
+model_reasoning_effort = "xhigh"
+model_reasoning_summary = "detailed"
+
+[profiles.o4-mini]
+model_provider = "azure"
+model = "o4-mini"
+model_reasoning_effort = "medium"
+model_reasoning_summary = "concise"
 
 {{- if env "AZURE_OPENAI_ENDPOINT" }}
 [model_providers.azure]
