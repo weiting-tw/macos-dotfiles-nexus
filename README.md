@@ -138,26 +138,72 @@ launchctl start com.user.chezmoi-update
 
 GPG 簽名密鑰存放在 Bitwarden，bootstrap 時自動檢測並引導匯入。
 
-**設定 GPG keys（每台機器）：**
+### 設定 GPG keys（每台機器）
 
 在 `~/.config/chezmoi/chezmoi.toml` 加入：
 
 ```toml
 [data.git]
-    signing_key = "YOUR_KEY_ID"
+    signing_key = "PERSONAL_KEY_ID"   # 全域預設簽名用 key
 
 [[data.gpg.keys]]
-    id = "YOUR_KEY_ID"
+    id = "PERSONAL_KEY_ID"
+    name = "Your Name"
+    purpose = "personal"
+
+[[data.gpg.keys]]
+    id = "WORK_KEY_ID"
     name = "Your Name"
     purpose = "work"
-
-[[data.gpg.keys]]
-    id = "ANOTHER_KEY_ID"
-    name = "Personal"
-    purpose = "personal"
 ```
 
-**設定 Bitwarden（可選，在 `~/.secrets`）：**
+### Git 多身份自動切換（includeIf）
+
+透過 Git 的 `includeIf` 機制，根據 repo 所在目錄自動切換身份與 GPG 簽名 key：
+
+```
+~/.gitconfig                          ← 全域（預設用 signing_key）
+├── [includeIf "gitdir:~/work/"]
+│   └── path = ~/.gitconfig-work      ← 覆寫為公司身份 + 公司 GPG key
+└── [includeIf "gitdir:~/personal/"]
+    └── path = ~/.gitconfig-personal  ← 覆寫為個人身份 + 個人 GPG key
+```
+
+**效果：**
+
+| 目錄 | 使用的身份 | GPG 簽名 |
+|------|-----------|----------|
+| `~/work/**` | `.gitconfig-work` 的 email + signingKey | 公司 GPG key |
+| `~/personal/**` | `.gitconfig-personal` 的 email + signingKey | 個人 GPG key |
+| 其他目錄 | 全域 `.gitconfig` | `signing_key` 指定的 key |
+
+**前置條件：** `chezmoi.toml` 須設定 `is_work = true`，否則 `includeIf` 區塊不會產生。
+
+**設定步驟：**
+
+1. 在 `chezmoi.toml` 設定 `is_work = true`
+2. 建立 host 設定目錄：`mkdir -p hosts/$(hostname -s)`
+3. 在該目錄建立 `.gitconfig-work` 和 `.gitconfig-personal`：
+
+```ini
+# hosts/<hostname>/.gitconfig-work
+[user]
+    email = your-name@company.com
+    signingKey = WORK_KEY_ID
+```
+
+```ini
+# hosts/<hostname>/.gitconfig-personal
+[user]
+    email = personal@example.com
+    signingKey = PERSONAL_KEY_ID
+```
+
+4. 執行 `chezmoi apply`，腳本 `04-setup-git-identity.sh` 會自動建立 `~/work`、`~/personal` 目錄並複製對應的 gitconfig 檔案到 `$HOME`
+
+### 設定 Bitwarden（可選）
+
+在 `~/.secrets` 加入以下環境變數，可實現免互動式 GPG key 匯入：
 
 ```bash
 export BW_SERVER=""            # Self-hosted URL（留空 = 互動式選擇）
@@ -166,31 +212,34 @@ export BW_CLIENTSECRET=""      # 免互動登入用，可留空
 export BW_GPG_ITEM_NAME=""     # Bitwarden item 名稱（留空 = 搜尋 "GPG"）
 ```
 
-**自動設定流程（Bootstrap 時）：**
+### 自動設定流程（Bootstrap 時）
 
 `06-setup-gpg.sh` 在首次安裝時自動執行：
 
-1. 檢測本機是否已有 GPG key（依據 `chezmoi.toml` 設定）
-2. 詢問是否要設定 GPG
+1. 檢測本機是否已有 GPG key（依據 `chezmoi.toml` 的 `gpg.keys` 設定）
+2. 缺少 key 時詢問是否要設定 GPG
 3. 有 `BW_SERVER` → 自動使用；沒有 → 互動式選擇（官方 / 自架）
 4. 有 `BW_CLIENTID` → API key 自動登入；沒有 → 互動式帳密 + 2FA
-5. 搜尋 Bitwarden 附件 → 下載 `.asc` → 匯入 → 設定信任等級
+5. 搜尋 Bitwarden 附件 → 下載 `.asc` → 匯入 → 設定信任等級 → 驗證簽名
 
-**手動匯入（不使用 Bitwarden CLI）：**
+### 手動匯入（不使用 Bitwarden CLI）
 
 ```bash
-gpg --import work.asc && gpg --import work-public.asc
-gpg --edit-key YOUR_KEY_ID trust    # 選擇 5 (ultimate)
+gpg --import personal.asc && gpg --import personal-public.asc
+gpg --edit-key PERSONAL_KEY_ID trust    # 選擇 5 (ultimate)
 ```
 
-**條件簽名：** `gpgsign = true` 僅在 `chezmoi.toml` 有設定 `signing_key` 時才啟用。
+### 條件簽名
 
-**設定檔層級：**
+`commit.gpgsign = true` 僅在 `chezmoi.toml` 有設定 `signing_key` 時才啟用。未設定時 `.gitconfig` 不會包含 `[gpg]` 和 `[commit]` 區塊。
+
+### 設定檔層級
 
 | 檔案 | 版控 | 用途 |
 |------|------|------|
 | `.chezmoidata.yaml` | Git | 預設值（`gpg.keys` 為空） |
-| `~/.config/chezmoi/chezmoi.toml` | 本機 | 每台機器的 GPG key 設定 |
+| `~/.config/chezmoi/chezmoi.toml` | 本機 | 每台機器的 GPG key / `is_work` 設定 |
+| `hosts/<hostname>/.gitconfig-*` | Git | 各機器的 work/personal 身份覆寫 |
 | `~/.secrets` | 本機 | Bitwarden 連線資訊（可選） |
 
 ## Codex MCP Wrapper
