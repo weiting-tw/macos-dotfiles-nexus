@@ -15,12 +15,20 @@ PACKAGES=(
     "yarn"
 )
 
+# Map package name -> command name for PATH-based detection
+declare -A PKG_CMD=(
+    ["@google/gemini-cli"]="gemini"
+    ["aicommits"]="aicommits"
+    ["yarn"]="yarn"
+)
+
 for pkg in "${PACKAGES[@]}"; do
-    if ! npm list -g "$pkg" &>/dev/null; then
+    cmd="${PKG_CMD[$pkg]:-$pkg}"
+    if npm list -g "$pkg" &>/dev/null || command -v "$cmd" &>/dev/null; then
+        echo "✓ $pkg already installed"
+    else
         echo "Installing $pkg..."
         npm install -g "$pkg"
-    else
-        echo "✓ $pkg already installed"
     fi
 done
 
