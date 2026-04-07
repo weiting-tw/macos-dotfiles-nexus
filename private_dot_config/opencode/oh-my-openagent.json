@@ -1,0 +1,49 @@
+{
+  "google_auth": false,
+  "agents": {
+    "sisyphus": {
+      "model": "gss/vertex_ai/claude-opus-4-6"
+    },
+    "Hephaestus": {
+      "model": "azure/gpt-5.4-pro"
+    },
+    "prometheus": {
+      "model": "azure/gpt-5.3-codex"
+    },
+    "explore": {
+      "model": "azure/gpt-5.1-codex-mini"
+    },
+    "oracle": {
+      "model": "azure/gpt-5.4-pro"
+    },
+    "code_assistant": {
+      "model": "azure/gpt-5.3-codex"
+    },
+    "debugger": {
+      "model": "azure/gpt-5.3-codex"
+    },
+    "tester": {
+      "model": "azure/gpt-5.3-codex"
+    },
+    "librarian": {
+      "model": "gss/gemini-3.1-pro-preview"
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "gss/gemini-3.1-pro-preview"
+    },
+    "ultrabrain": {
+      "model": "azure/gpt-5.4-pro"
+    },
+    "unspecified-high": {
+      "model": "gss/vertex_ai/claude-opus-4-6"
+    },
+    "deep": {
+      "model": "gpt-5.4-pro"
+    },
+    "quick": {
+      "model": "gemini-3.1-flash-lite-preview"
+    }
+  }
+}
