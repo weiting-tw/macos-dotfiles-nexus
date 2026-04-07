@@ -1,0 +1,123 @@
+{
+  "plugin": [
+    "oh-my-openagent",
+    "opencode-antigravity-auth",
+    "opencode-mystatus"
+  ],
+  "command": {
+    "mystatus": {
+      "description": "Query quota usage for all AI accounts",
+      "template": "Use the mystatus tool to query quota usage. Return the result as-is without modification."
+    }
+  },
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "edit": "allow"
+  },
+  "provider": {
+    "azure-lb": {
+      "models": {
+        "gpt-5.4-mini": {
+          "limit": { "context": 200000, "output": 100000 },
+          "name": "GPT 5.4 Mini"
+        },
+        "gpt-5.4": {
+          "limit": { "context": 200000, "output": 100000 },
+          "name": "GPT 5.4"
+        },
+        "gpt-5.4-pro": {
+          "limit": { "context": 200000, "output": 100000 },
+          "name": "GPT 5.4 Pro"
+        },
+        "gpt-5.3-codex": {
+          "limit": { "context": 200000, "output": 100000 },
+          "name": "GPT 5.3 Codex"
+        },
+        "gpt-5.1-codex-max": {
+          "limit": { "context": 200000, "output": 100000 },
+          "name": "GPT 5.1 Codex Max"
+        },
+        "o4": {
+          "limit": { "context": 200000, "output": 100000 },
+          "name": "o4"
+        }
+      },
+      "name": "Azure LB",
+      "npm": "@ai-sdk/openai",
+      "options": {
+        "apiKey": "{env:AZURE_LB_BEARER_TOKEN}",
+        "baseURL": "{env:AZURE_LB_ENDPOINT}"
+      }
+    },
+    "gss": {
+      "models": {
+        "claude-sonnet-4-5@20250929": {
+          "name": "claude-sonnet-4-5"
+        },
+        "gemini-3.1-flash-lite-preview": {
+          "name": "gemini-3.1-flash-lite-preview"
+        },
+        "gemini-3-pro-preview": {
+          "name": "gemini-3-pro-preview"
+        },
+        "gemini-3.1-pro-preview": {
+          "name": "gemini-3.1-pro-preview"
+        },
+        "claude-opus-4-5@20251101": {
+          "name": "claude-opus-4-5"
+        },
+        "gemini-3-flash-preview": {
+          "name": "gemini-3-flash-preview"
+        },
+        "vertex_ai/claude-opus-4-6": {
+          "name": "claude-opus-4-6"
+        },
+        "claude-haiku-4-5@20251001": {
+          "name": "claude-haiku-4-5"
+        },
+        "vertex_ai/claude-sonnet-4-6": {
+          "name": "claude-sonnet-4-6"
+        }
+      },
+      "name": "GSS",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "apiKey": "{env:WORK_ANTHROPIC_AUTH_TOKEN}",
+        "baseURL": "{env:WORK_ANTHROPIC_BASE_URL}"
+      }
+    }
+  },
+  "lsp": {},
+  "mcp": {
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "-y", "@playwright/mcp@latest"]
+    },
+    "gemini": {
+      "type": "local",
+      "command": ["npx", "-y", "gemini-mcp-tool@latest"]
+    },
+    "perplexity-ask": {
+      "type": "local",
+      "command": ["npx", "-y", "server-perplexity-ask"],
+      "environment": {
+        "PERPLEXITY_API_KEY": "{env:PERPLEXITY_API_KEY}"
+      }
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest"]
+    },
+    "context7": {
+      "type": "local",
+      "command": ["npx", "-y", "context7-mcp@latest"],
+      "environment": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      }
+    },
+    "microsoft-learn": {
+      "type": "remote",
+      "url": "https://learn.microsoft.com/api/mcp"
+    }
+  }
+}
