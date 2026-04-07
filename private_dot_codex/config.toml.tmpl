@@ -31,19 +31,19 @@ model = "gpt-5.1-codex-mini"
 model_reasoning_effort = "medium"
 model_reasoning_summary = "concise"
 
-[profiles.gpt-5.4]
+[profiles."gpt-5.4"]
 model_provider = "azure"
 model = "gpt-5.4"
 model_reasoning_effort = "high"
 model_reasoning_summary = "detailed"
 
-[profiles.gpt-5.4-pro]
+[profiles."gpt-5.4-pro"]
 model_provider = "azure"
 model = "gpt-5.4-pro"
 model_reasoning_effort = "xhigh"
 model_reasoning_summary = "detailed"
 
-[profiles.gpt-5.4-mini]
+[profiles."gpt-5.4-mini"]
 model_provider = "azure"
 model = "gpt-5.4-mini"
 model_reasoning_effort = "medium"
@@ -102,6 +102,3 @@ env = { "CONTEXT7_API_KEY" = "{{ env "CONTEXT7_API_KEY" }}" }
 [mcp_servers.gemini]
 command = "npx"
 args = ["-y", "gemini-mcp-tool@latest"]
-
-[projects."/Users/wilber_chen"]
-trust_level = "trusted"
