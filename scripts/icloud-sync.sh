@@ -46,6 +46,7 @@ SYMLINK_REGISTRY=(
     "$HOME/.opencode-providers.json|file|OpenCode providers"
     "$HOME/Library/Application Support/Beyond Compare 5|dir|Beyond Compare 5"
     "$HOME/.agents|dir|Codex skills (agents)"
+    "$HOME/.config/filezilla|dir|FileZilla"
 )
 
 # ===== 健康檢查單項 =====
@@ -279,6 +280,7 @@ capture() {
         check_conflict "$HOME/.config/opencode/superpowers" "$ICLOUD_DIR/opencode/superpowers" "OpenCode superpowers" || has_conflict=true
         check_conflict "$HOME/Library/Application Support/Beyond Compare 5" "$ICLOUD_DIR/bcompare5" "Beyond Compare 5" || has_conflict=true
         check_conflict "$HOME/.agents" "$ICLOUD_DIR/codex-skills" "Codex skills (agents)" || has_conflict=true
+        check_conflict "$HOME/.config/filezilla" "$ICLOUD_DIR/filezilla" "FileZilla" || has_conflict=true
 
         if [[ "$has_conflict" == "true" ]]; then
             log_warn "發現衝突，capture 中止"
@@ -286,7 +288,7 @@ capture() {
         fi
     fi
 
-    mkdir -p "$ICLOUD_DIR"/{claude/{agents,skills,hooks,hud},codex/skills,codex-skills,ccr,opencode/{agent,plugin,superpowers},vscode,iterm2,bcompare5}
+    mkdir -p "$ICLOUD_DIR"/{claude/{agents,skills,hooks,hud},codex/skills,codex-skills,ccr,opencode/{agent,plugin,superpowers},vscode,iterm2,bcompare5,filezilla}
 
     # Claude Code agents
     if [[ -d "$HOME/.claude/agents" ]] && [[ ! -L "$HOME/.claude/agents" ]]; then
@@ -379,6 +381,12 @@ capture() {
     if [[ -d "$HOME/.agents" ]] && [[ ! -L "$HOME/.agents" ]]; then
         rsync -av --delete --exclude='.DS_Store' "$HOME/.agents/" "$ICLOUD_DIR/codex-skills/"
         log_ok "Codex skills (agents) → iCloud"
+    fi
+
+    # FileZilla
+    if [[ -d "$HOME/.config/filezilla" ]] && [[ ! -L "$HOME/.config/filezilla" ]]; then
+        rsync -av --delete --exclude='lockfile' --exclude='queue.sqlite3' --exclude='.DS_Store' "$HOME/.config/filezilla/" "$ICLOUD_DIR/filezilla/"
+        log_ok "FileZilla → iCloud"
     fi
 
     # VS Code extensions
@@ -679,6 +687,22 @@ apply() {
         fi
     fi
 
+    # FileZilla (create symlink)
+    if [[ -d "$ICLOUD_DIR/filezilla" ]]; then
+        if [[ ! -L "$HOME/.config/filezilla" ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -d "$HOME/.config/filezilla" ]] && log_info "[DRY-RUN] Would backup: filezilla → filezilla.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.config/filezilla → $ICLOUD_DIR/filezilla"
+            else
+                [[ -d "$HOME/.config/filezilla" ]] && mv "$HOME/.config/filezilla" "$HOME/.config/filezilla.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/filezilla" "$HOME/.config/filezilla"
+                log_ok "FileZilla ← iCloud (symlinked)"
+            fi
+        else
+            log_ok "FileZilla already symlinked"
+        fi
+    fi
+
     # iTerm2 preferences (set native iCloud sync)
     if [[ -d "$ICLOUD_DIR/iterm2" ]]; then
         if [[ "$dry_run" == "true" ]]; then
@@ -940,6 +964,20 @@ diff_configs() {
         fi
     fi
 
+    # FileZilla
+    if [[ -d "$HOME/.config/filezilla" ]] && [[ ! -L "$HOME/.config/filezilla" ]]; then
+        if [[ -d "$ICLOUD_DIR/filezilla" ]]; then
+            echo ""
+            log_info "FileZilla:"
+            if diff -rq "$HOME/.config/filezilla" "$ICLOUD_DIR/filezilla" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+                diff -rq "$HOME/.config/filezilla" "$ICLOUD_DIR/filezilla" 2>/dev/null | head -20 | sed 's/^/  /'
+            fi
+        fi
+    fi
+
     echo ""
     if [[ "$has_diff" == "false" ]]; then
         log_ok "No differences found"
@@ -992,6 +1030,9 @@ status() {
 
     [[ -d "$ICLOUD_DIR/codex-skills" ]] && \
         log_info "Codex skills (agents)/ ($(ls "$ICLOUD_DIR/codex-skills" 2>/dev/null | wc -l | tr -d ' ') files)"
+
+    [[ -d "$ICLOUD_DIR/filezilla" ]] && \
+        log_info "FileZilla/ ($(ls "$ICLOUD_DIR/filezilla" 2>/dev/null | wc -l | tr -d ' ') files)"
 
     [[ -f "$ICLOUD_DIR/ccr/config.json" ]] && \
         log_info "CCR config.json ($(stat -f '%Sm' "$ICLOUD_DIR/ccr/config.json" 2>/dev/null || echo 'unknown'))"
