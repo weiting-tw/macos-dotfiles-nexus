@@ -39,12 +39,13 @@ SYMLINK_REGISTRY=(
     "$HOME/.claude/settings.json|file|Claude settings"
     "$HOME/.codex/skills|dir|Codex skills"
     "$HOME/.claude-code-router/config.json|file|CCR config"
-    "$HOME/.config/opencode/oh-my-opencode.json|file|OpenCode config"
+    "$HOME/.config/opencode/oh-my-openagent.json|file|OpenCode config"
     "$HOME/.config/opencode/agent|dir|OpenCode agents"
     "$HOME/.config/opencode/plugin|dir|OpenCode plugin"
     "$HOME/.config/opencode/superpowers|dir|OpenCode superpowers"
     "$HOME/.opencode-providers.json|file|OpenCode providers"
     "$HOME/Library/Application Support/Beyond Compare 5|dir|Beyond Compare 5"
+    "$HOME/.agents|dir|Codex skills (agents)"
 )
 
 # ===== 健康檢查單項 =====
@@ -272,11 +273,12 @@ capture() {
         check_conflict "$HOME/.codex/skills" "$ICLOUD_DIR/codex/skills" "Codex skills" || has_conflict=true
         check_conflict "$HOME/.claude/settings.json" "$ICLOUD_DIR/claude/settings.json" "Claude settings.json" || has_conflict=true
         check_conflict "$HOME/.claude-code-router/config.json" "$ICLOUD_DIR/ccr/config.json" "CCR config" || has_conflict=true
-        check_conflict "$HOME/.config/opencode/oh-my-opencode.json" "$ICLOUD_DIR/opencode/oh-my-opencode.json" "OpenCode config" || has_conflict=true
+        check_conflict "$HOME/.config/opencode/oh-my-openagent.json" "$ICLOUD_DIR/opencode/oh-my-openagent.json" "OpenCode config" || has_conflict=true
         check_conflict "$HOME/.config/opencode/agent" "$ICLOUD_DIR/opencode/agent" "OpenCode agents" || has_conflict=true
         check_conflict "$HOME/.config/opencode/plugin" "$ICLOUD_DIR/opencode/plugin" "OpenCode plugin" || has_conflict=true
         check_conflict "$HOME/.config/opencode/superpowers" "$ICLOUD_DIR/opencode/superpowers" "OpenCode superpowers" || has_conflict=true
         check_conflict "$HOME/Library/Application Support/Beyond Compare 5" "$ICLOUD_DIR/bcompare5" "Beyond Compare 5" || has_conflict=true
+        check_conflict "$HOME/.agents" "$ICLOUD_DIR/codex-skills" "Codex skills (agents)" || has_conflict=true
 
         if [[ "$has_conflict" == "true" ]]; then
             log_warn "發現衝突，capture 中止"
@@ -284,7 +286,7 @@ capture() {
         fi
     fi
 
-    mkdir -p "$ICLOUD_DIR"/{claude/{agents,skills,hooks,hud},codex/skills,ccr,opencode/{agent,plugin,superpowers},vscode,iterm2,bcompare5}
+    mkdir -p "$ICLOUD_DIR"/{claude/{agents,skills,hooks,hud},codex/skills,codex-skills,ccr,opencode/{agent,plugin,superpowers},vscode,iterm2,bcompare5}
 
     # Claude Code agents
     if [[ -d "$HOME/.claude/agents" ]] && [[ ! -L "$HOME/.claude/agents" ]]; then
@@ -341,9 +343,9 @@ capture() {
     fi
 
     # OpenCode non-sensitive
-    if [[ -f "$HOME/.config/opencode/oh-my-opencode.json" ]] && [[ ! -L "$HOME/.config/opencode/oh-my-opencode.json" ]]; then
-        cp "$HOME/.config/opencode/oh-my-opencode.json" "$ICLOUD_DIR/opencode/oh-my-opencode.json"
-        log_ok "OpenCode oh-my-opencode.json → iCloud"
+    if [[ -f "$HOME/.config/opencode/oh-my-openagent.json" ]] && [[ ! -L "$HOME/.config/opencode/oh-my-openagent.json" ]]; then
+        cp "$HOME/.config/opencode/oh-my-openagent.json" "$ICLOUD_DIR/opencode/oh-my-openagent.json"
+        log_ok "OpenCode oh-my-openagent.json → iCloud"
     fi
 
     if [[ -d "$HOME/.config/opencode/agent" ]] && [[ ! -L "$HOME/.config/opencode/agent" ]]; then
@@ -371,6 +373,12 @@ capture() {
     if [[ -d "$HOME/Library/Application Support/Beyond Compare 5" ]] && [[ ! -L "$HOME/Library/Application Support/Beyond Compare 5" ]]; then
         rsync -av --delete --exclude='*.bak' --exclude='.BCLOCK' --exclude='.DS_Store' "$HOME/Library/Application Support/Beyond Compare 5/" "$ICLOUD_DIR/bcompare5/"
         log_ok "Beyond Compare 5 → iCloud"
+    fi
+
+    # Codex skills (agents)
+    if [[ -d "$HOME/.agents" ]] && [[ ! -L "$HOME/.agents" ]]; then
+        rsync -av --delete --exclude='.DS_Store' "$HOME/.agents/" "$ICLOUD_DIR/codex-skills/"
+        log_ok "Codex skills (agents) → iCloud"
     fi
 
     # VS Code extensions
@@ -583,13 +591,13 @@ apply() {
             mkdir -p "$HOME/.config/opencode"
         fi
 
-        if [[ -f "$ICLOUD_DIR/opencode/oh-my-opencode.json" ]] && [[ ! -L "$HOME/.config/opencode/oh-my-opencode.json" ]]; then
+        if [[ -f "$ICLOUD_DIR/opencode/oh-my-openagent.json" ]] && [[ ! -L "$HOME/.config/opencode/oh-my-openagent.json" ]]; then
             if [[ "$dry_run" == "true" ]]; then
-                [[ -f "$HOME/.config/opencode/oh-my-opencode.json" ]] && log_info "[DRY-RUN] Would backup: oh-my-opencode.json → oh-my-opencode.json.backup.TIMESTAMP"
-                log_info "[DRY-RUN] Would symlink: ~/.config/opencode/oh-my-opencode.json → $ICLOUD_DIR/opencode/oh-my-opencode.json"
+                [[ -f "$HOME/.config/opencode/oh-my-openagent.json" ]] && log_info "[DRY-RUN] Would backup: oh-my-openagent.json → oh-my-openagent.json.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.config/opencode/oh-my-openagent.json → $ICLOUD_DIR/opencode/oh-my-openagent.json"
             else
-                [[ -f "$HOME/.config/opencode/oh-my-opencode.json" ]] && mv "$HOME/.config/opencode/oh-my-opencode.json" "$HOME/.config/opencode/oh-my-opencode.json.backup.$(date +%s)"
-                ln -sf "$ICLOUD_DIR/opencode/oh-my-opencode.json" "$HOME/.config/opencode/oh-my-opencode.json"
+                [[ -f "$HOME/.config/opencode/oh-my-openagent.json" ]] && mv "$HOME/.config/opencode/oh-my-openagent.json" "$HOME/.config/opencode/oh-my-openagent.json.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/opencode/oh-my-openagent.json" "$HOME/.config/opencode/oh-my-openagent.json"
                 log_ok "OpenCode config ← iCloud (symlinked)"
             fi
         fi
@@ -652,6 +660,22 @@ apply() {
             fi
         else
             log_ok "Beyond Compare 5 already symlinked"
+        fi
+    fi
+
+    # Codex skills (agents) (create symlink)
+    if [[ -d "$ICLOUD_DIR/codex-skills" ]]; then
+        if [[ ! -L "$HOME/.agents" ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -d "$HOME/.agents" ]] && log_info "[DRY-RUN] Would backup: .agents → .agents.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.agents → $ICLOUD_DIR/codex-skills"
+            else
+                [[ -d "$HOME/.agents" ]] && mv "$HOME/.agents" "$HOME/.agents.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/codex-skills" "$HOME/.agents"
+                log_ok "Codex skills (agents) ← iCloud (symlinked)"
+            fi
+        else
+            log_ok "Codex skills (agents) already symlinked"
         fi
     fi
 
@@ -837,11 +861,11 @@ diff_configs() {
     fi
 
     # OpenCode config
-    if [[ -f "$HOME/.config/opencode/oh-my-opencode.json" ]] && [[ ! -L "$HOME/.config/opencode/oh-my-opencode.json" ]]; then
-        if [[ -f "$ICLOUD_DIR/opencode/oh-my-opencode.json" ]]; then
+    if [[ -f "$HOME/.config/opencode/oh-my-openagent.json" ]] && [[ ! -L "$HOME/.config/opencode/oh-my-openagent.json" ]]; then
+        if [[ -f "$ICLOUD_DIR/opencode/oh-my-openagent.json" ]]; then
             echo ""
-            log_info "OpenCode oh-my-opencode.json:"
-            if diff -q "$HOME/.config/opencode/oh-my-opencode.json" "$ICLOUD_DIR/opencode/oh-my-opencode.json" 2>/dev/null; then
+            log_info "OpenCode oh-my-openagent.json:"
+            if diff -q "$HOME/.config/opencode/oh-my-openagent.json" "$ICLOUD_DIR/opencode/oh-my-openagent.json" 2>/dev/null; then
                 echo "  (identical)"
             else
                 has_diff=true
@@ -897,6 +921,21 @@ diff_configs() {
                 echo "  (identical)"
             else
                 has_diff=true
+                diff -rq "$HOME/Library/Application Support/Beyond Compare 5" "$ICLOUD_DIR/bcompare5" 2>/dev/null | head -20 | sed 's/^/  /'
+            fi
+        fi
+    fi
+
+    # Codex skills (agents)
+    if [[ -d "$HOME/.agents" ]] && [[ ! -L "$HOME/.agents" ]]; then
+        if [[ -d "$ICLOUD_DIR/codex-skills" ]]; then
+            echo ""
+            log_info "Codex skills (agents):"
+            if diff -rq "$HOME/.agents" "$ICLOUD_DIR/codex-skills" 2>/dev/null; then
+                echo "  (identical)"
+            else
+                has_diff=true
+                diff -rq "$HOME/.agents" "$ICLOUD_DIR/codex-skills" 2>/dev/null | head -20 | sed 's/^/  /'
             fi
         fi
     fi
@@ -936,8 +975,8 @@ status() {
     [[ -d "$ICLOUD_DIR/codex/skills" ]] && \
         log_info "Codex skills/ ($(ls "$ICLOUD_DIR/codex/skills" 2>/dev/null | wc -l | tr -d ' ') files)"
 
-    [[ -f "$ICLOUD_DIR/opencode/oh-my-opencode.json" ]] && \
-        log_info "OpenCode oh-my-opencode.json"
+    [[ -f "$ICLOUD_DIR/opencode/oh-my-openagent.json" ]] && \
+        log_info "OpenCode oh-my-openagent.json"
 
     [[ -d "$ICLOUD_DIR/opencode/agent" ]] && \
         log_info "OpenCode agents/ ($(ls "$ICLOUD_DIR/opencode/agent" 2>/dev/null | wc -l | tr -d ' ') files)"
@@ -950,6 +989,9 @@ status() {
 
     [[ -d "$ICLOUD_DIR/bcompare5" ]] && \
         log_info "Beyond Compare 5/ ($(ls "$ICLOUD_DIR/bcompare5" 2>/dev/null | wc -l | tr -d ' ') files)"
+
+    [[ -d "$ICLOUD_DIR/codex-skills" ]] && \
+        log_info "Codex skills (agents)/ ($(ls "$ICLOUD_DIR/codex-skills" 2>/dev/null | wc -l | tr -d ' ') files)"
 
     [[ -f "$ICLOUD_DIR/ccr/config.json" ]] && \
         log_info "CCR config.json ($(stat -f '%Sm' "$ICLOUD_DIR/ccr/config.json" 2>/dev/null || echo 'unknown'))"
