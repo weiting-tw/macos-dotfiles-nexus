@@ -39,11 +39,11 @@ SYMLINK_REGISTRY=(
     "$HOME/.claude/settings.json|file|Claude settings"
     "$HOME/.codex/skills|dir|Codex skills"
     "$HOME/.claude-code-router/config.json|file|CCR config"
-    "$HOME/.config/opencode/oh-my-openagent.json|file|OpenCode config"
+    "$HOME/.config/opencode/oh-my-openagent.json|file|OpenCode agent config"
+    "$HOME/.config/opencode/opencode.json|file|OpenCode provider config"
     "$HOME/.config/opencode/agent|dir|OpenCode agents"
     "$HOME/.config/opencode/plugin|dir|OpenCode plugin"
     "$HOME/.config/opencode/superpowers|dir|OpenCode superpowers"
-    "$HOME/.opencode-providers.json|file|OpenCode providers"
     "$HOME/Library/Application Support/Beyond Compare 5|dir|Beyond Compare 5"
     "$HOME/.agents|dir|Codex skills (agents)"
     "$HOME/.config/filezilla|dir|FileZilla"
@@ -350,6 +350,11 @@ capture() {
         log_ok "OpenCode oh-my-openagent.json → iCloud"
     fi
 
+    if [[ -f "$HOME/.config/opencode/opencode.json" ]] && [[ ! -L "$HOME/.config/opencode/opencode.json" ]]; then
+        cp "$HOME/.config/opencode/opencode.json" "$ICLOUD_DIR/opencode/opencode.json"
+        log_ok "OpenCode opencode.json → iCloud"
+    fi
+
     if [[ -d "$HOME/.config/opencode/agent" ]] && [[ ! -L "$HOME/.config/opencode/agent" ]]; then
         rsync -av --delete "$HOME/.config/opencode/agent/" "$ICLOUD_DIR/opencode/agent/"
         log_ok "OpenCode agents → iCloud"
@@ -363,12 +368,6 @@ capture() {
     if [[ -d "$HOME/.config/opencode/superpowers" ]] && [[ ! -L "$HOME/.config/opencode/superpowers" ]]; then
         rsync -av --delete "$HOME/.config/opencode/superpowers/" "$ICLOUD_DIR/opencode/superpowers/"
         log_ok "OpenCode superpowers → iCloud"
-    fi
-
-    # OpenCode providers (動態 provider 設定)
-    if [[ -f "$HOME/.opencode-providers.json" ]] && [[ ! -L "$HOME/.opencode-providers.json" ]]; then
-        cp "$HOME/.opencode-providers.json" "$ICLOUD_DIR/opencode/opencode-providers.json"
-        log_ok "OpenCode providers → iCloud"
     fi
 
     # Beyond Compare 5
@@ -606,7 +605,18 @@ apply() {
             else
                 [[ -f "$HOME/.config/opencode/oh-my-openagent.json" ]] && mv "$HOME/.config/opencode/oh-my-openagent.json" "$HOME/.config/opencode/oh-my-openagent.json.backup.$(date +%s)"
                 ln -sf "$ICLOUD_DIR/opencode/oh-my-openagent.json" "$HOME/.config/opencode/oh-my-openagent.json"
-                log_ok "OpenCode config ← iCloud (symlinked)"
+                log_ok "OpenCode agent config ← iCloud (symlinked)"
+            fi
+        fi
+
+        if [[ -f "$ICLOUD_DIR/opencode/opencode.json" ]] && [[ ! -L "$HOME/.config/opencode/opencode.json" ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                [[ -f "$HOME/.config/opencode/opencode.json" ]] && log_info "[DRY-RUN] Would backup: opencode.json → opencode.json.backup.TIMESTAMP"
+                log_info "[DRY-RUN] Would symlink: ~/.config/opencode/opencode.json → $ICLOUD_DIR/opencode/opencode.json"
+            else
+                [[ -f "$HOME/.config/opencode/opencode.json" ]] && mv "$HOME/.config/opencode/opencode.json" "$HOME/.config/opencode/opencode.json.backup.$(date +%s)"
+                ln -sf "$ICLOUD_DIR/opencode/opencode.json" "$HOME/.config/opencode/opencode.json"
+                log_ok "OpenCode provider config ← iCloud (symlinked)"
             fi
         fi
 
@@ -641,17 +651,6 @@ apply() {
                 ln -sf "$ICLOUD_DIR/opencode/superpowers" "$HOME/.config/opencode/superpowers"
                 log_ok "OpenCode superpowers ← iCloud (symlinked)"
             fi
-        fi
-    fi
-
-    # OpenCode providers (動態 provider 設定)
-    if [[ -f "$ICLOUD_DIR/opencode/opencode-providers.json" ]] && [[ ! -L "$HOME/.opencode-providers.json" ]]; then
-        if [[ "$dry_run" == "true" ]]; then
-            log_info "[DRY-RUN] Would symlink: ~/.opencode-providers.json → $ICLOUD_DIR/opencode/opencode-providers.json"
-        else
-            [[ -f "$HOME/.opencode-providers.json" ]] && mv "$HOME/.opencode-providers.json" "$HOME/.opencode-providers.json.backup.$(date +%s)"
-            ln -sf "$ICLOUD_DIR/opencode/opencode-providers.json" "$HOME/.opencode-providers.json"
-            log_ok "OpenCode providers ← iCloud (symlinked)"
         fi
     fi
 
@@ -1016,6 +1015,9 @@ status() {
     [[ -f "$ICLOUD_DIR/opencode/oh-my-openagent.json" ]] && \
         log_info "OpenCode oh-my-openagent.json"
 
+    [[ -f "$ICLOUD_DIR/opencode/opencode.json" ]] && \
+        log_info "OpenCode opencode.json"
+
     [[ -d "$ICLOUD_DIR/opencode/agent" ]] && \
         log_info "OpenCode agents/ ($(ls "$ICLOUD_DIR/opencode/agent" 2>/dev/null | wc -l | tr -d ' ') files)"
 
@@ -1036,9 +1038,6 @@ status() {
 
     [[ -f "$ICLOUD_DIR/ccr/config.json" ]] && \
         log_info "CCR config.json ($(stat -f '%Sm' "$ICLOUD_DIR/ccr/config.json" 2>/dev/null || echo 'unknown'))"
-
-    [[ -f "$ICLOUD_DIR/opencode/opencode-providers.json" ]] && \
-        log_info "OpenCode providers.json ($(stat -f '%Sm' "$ICLOUD_DIR/opencode/opencode-providers.json" 2>/dev/null || echo 'unknown'))"
 
     [[ -f "$ICLOUD_DIR/vscode/extensions.txt" ]] && \
         log_info "VS Code extensions.txt ($(wc -l < "$ICLOUD_DIR/vscode/extensions.txt" | tr -d ' ') extensions)"
