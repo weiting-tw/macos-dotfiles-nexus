@@ -1,0 +1,22 @@
+{{- if eq .chezmoi.os "darwin" }}{{- if index . "has_ai_tools" -}}
+#!/bin/bash
+# Sync MCP server config from iCloud template → ~/.claude.json
+# (Claude Code reads MCP user-scope from ~/.claude.json, not ~/.claude/.mcp.json)
+set -euo pipefail
+
+CHEZMOI_SOURCE="{{ .chezmoi.sourceDir }}"
+SYNC_SCRIPT="$CHEZMOI_SOURCE/scripts/sync-mcp.sh"
+
+if [[ ! -x "$SYNC_SCRIPT" ]]; then
+    echo "⚠ sync-mcp.sh not found or not executable, skipping MCP sync"
+    exit 0
+fi
+
+# 需要 ~/.claude.json 已存在（Claude Code 首次啟動才會建立）
+if [[ ! -f "$HOME/.claude.json" ]]; then
+    echo "⊘ ~/.claude.json 尚未建立（請先啟動 Claude Code 一次），跳過 MCP sync"
+    exit 0
+fi
+
+bash "$SYNC_SCRIPT"
+{{- end }}{{ end -}}
