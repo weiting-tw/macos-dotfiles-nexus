@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Claude Desktop config merger (chezmoi modify_ script)
+#
+# 策略：
+# - 共用區塊（mcpServers、使用者偏好）由這份腳本覆蓋
+# - 機器特定 key（dispatchTrustedCodeWorkspaces、chromeExtension.*）保留現有值
+# - Claude Desktop runtime 寫入的機器特定狀態不會被吃掉
+#
+# chezmoi 執行時：stdin = 當前 claude_desktop_config.json 內容，stdout = 新內容
+
+set -euo pipefail
+
+for bin in jq; do
+    command -v "$bin" >/dev/null || { echo "{}"; exit 0; }
+done
+
+# 載入 secrets 用於展開 API keys
+if [[ -f "$HOME/.secrets" ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source "$HOME/.secrets"
+    set +a
+fi
+
+CURRENT=$(cat)
+[[ -z "$CURRENT" ]] && CURRENT='{}'
+
+# 共用區塊
+DESIRED=$(jq -n \
+    --arg perplexity_key "${PERPLEXITY_API_KEY:-}" \
+    --arg n8n_token     "${N8N_MCP_TOKEN:-}" \
+    '{
+      mcpServers: {
+        "perplexity-ask": {
+          command: "npx",
+          args: ["-y", "server-perplexity-ask"],
+          env: { PERPLEXITY_API_KEY: $perplexity_key }
+        },
+        "n8n-mcp": {
+          command: "npx",
+          args: [
+            "-y", "supergateway",
+            "--streamableHttp", "https://n8n.weiting.me/mcp-server/http",
+            "--header", ("authorization:Bearer " + $n8n_token)
+          ]
+        }
+      },
+      preferences: {
+        quickEntryDictationShortcut: "off",
+        allowAllBrowserActions: true,
+        dispatchCodeTasksPermissionMode: "bypassPermissions",
+        coworkScheduledTasksEnabled: true,
+        ccdScheduledTasksEnabled: true,
+        sidebarMode: "task",
+        bypassPermissionsModeEnabled: true,
+        coworkWebSearchEnabled: true,
+        keepAwakeEnabled: true,
+        chicagoEnabled: true
+      }
+    }')
+
+# 遞迴 merge：$DESIRED 的 key 會覆蓋 CURRENT，CURRENT 獨有的 key（例如
+# dispatchTrustedCodeWorkspaces、chromeExtension.pairedDeviceId）原樣保留
+echo "$CURRENT" | jq --argjson d "$DESIRED" '. * $d'
