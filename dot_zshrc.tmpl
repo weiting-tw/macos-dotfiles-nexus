@@ -208,6 +208,7 @@ ccw() {
     ANTHROPIC_DEFAULT_SONNET_MODEL="${WORK_ANTHROPIC_DEFAULT_SONNET_MODEL}" \
     ANTHROPIC_DEFAULT_OPUS_MODEL="${WORK_ANTHROPIC_DEFAULT_OPUS_MODEL}" \
     ANTHROPIC_DEFAULT_HAIKU_MODEL="${WORK_ANTHROPIC_DEFAULT_HAIKU_MODEL}" \
+    CLAUDE_CODE_DISABLE_1M_CONTEXT=1 \
     claude --allow-dangerously-skip-permissions "$@"
   }
 alias oc='omnara --base-url "${OMNARA_BASE_URL}" --permission-mode bypassPermissions'
