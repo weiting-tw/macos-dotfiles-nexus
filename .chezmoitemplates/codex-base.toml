@@ -3,7 +3,7 @@ profile="codex"
 # 可用選項："read-only" | "workspace-write" | "danger-full-access"
 # workspace-write：僅允許寫入工作目錄，較安全的預設值
 sandbox_mode = "workspace-write"
-approval_policy = "on-failure" # "untrusted" or "on-failure" or "never"
+approval_policy = "on-request" # "untrusted" or "on-request" or "never"
 
 [profiles.codex]
 model_provider = "azure"
