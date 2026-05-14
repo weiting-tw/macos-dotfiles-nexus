@@ -7,12 +7,47 @@ export HOMEBREW_CASK_OPTS="--appdir=~/Applications"
 {{- end }}
 
 # ===== Antidote Plugin Manager =====
-# 取代直接載入 oh-my-zsh，改用 Antidote 統一管理
-# Plugin 清單在 ~/.zsh_plugins.txt
-# Theme 由 use-omz 的 precmd hook 自動載入（需在 antidote load 前設定）
 ZSH_THEME="af-magic"
-source "$HOME/.antidote/antidote.zsh"
-antidote load "$HOME/.zsh_plugins.txt"
+
+# 效能優化：預設變數，跳過 use-omz 內的慢操作
+DISABLE_AUTO_UPDATE=true                         # 跳過 OMZ 更新檢查 (~0.4s)
+SHORT_HOST="${HOST%%.*}"                         # 跳過 scutil --get LocalHostName (~0.86s)
+export ZSH="$HOME/Library/Caches/antidote/https-COLON--SLASH--SLASH-github.com-SLASH-ohmyzsh-SLASH-ohmyzsh"
+
+# 直接 source 預編譯 bundle，只在 plugins.txt 更新時重建（跳過 antidote wrapper ~2.4s）
+_antidote_bundle="${HOME}/.zsh_plugins.zsh"
+if [[ ! -f "$_antidote_bundle" || "${HOME}/.zsh_plugins.txt" -nt "$_antidote_bundle" ]]; then
+  source "$HOME/.antidote/antidote.zsh"
+  antidote bundle < "${HOME}/.zsh_plugins.txt" > "$_antidote_bundle"
+fi
+source "$_antidote_bundle"
+# antidote 指令懶載入（需要時再 source）
+antidote() { unfunction antidote; source "$HOME/.antidote/antidote.zsh" && antidote "$@" }
+
+# 覆寫 has-zcompdump-expired：跳過每次 git rev-parse (~1.3s)，改用每日時間比對
+function has-zcompdump-expired {
+  local today dump_date
+  today=$(date +%Y%m%d)
+  dump_date=$(date -r "${ZSH_COMPDUMP:-$HOME/.zcompdump}" +%Y%m%d 2>/dev/null) || return 0
+  [[ "$today" != "$dump_date" ]]
+}
+
+# ===== Completion 快取（取代 kubectl/docker OMZ 插件）=====
+_zsh_cache_dir="${HOME}/.zsh/cache"
+[[ -d "$_zsh_cache_dir" ]] || mkdir -p "$_zsh_cache_dir"
+
+_load_cached_completion() {
+  local cmd="$1" args="${2:-completion zsh}"
+  local cache="${_zsh_cache_dir}/${cmd}_completion.zsh"
+  local bin; bin=$(command -v "$cmd" 2>/dev/null) || return
+  if [[ ! -f "$cache" || "$bin" -nt "$cache" ]]; then
+    $cmd ${=args} > "$cache" 2>/dev/null || { rm -f "$cache"; return; }
+  fi
+  source "$cache"
+}
+
+_load_cached_completion kubectl
+_load_cached_completion docker "completion zsh"
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"
@@ -216,9 +251,13 @@ alias ocx='omnara --base-url "${OMNARA_BASE_URL}" --agent=codex --permission-mod
 {{- end }}
 
 {{- if eq (index . "version_manager") "mise" }}
-# mise 版本管理
+# mise 版本管理（快取 activation script，避免每次啟動 fork 子 shell）
 if command -v mise &>/dev/null; then
-    eval "$(mise activate zsh)"
+  _mise_cache="${_zsh_cache_dir}/mise_activate.zsh"
+  if [[ ! -f "$_mise_cache" || "$(command -v mise)" -nt "$_mise_cache" ]]; then
+    mise activate zsh > "$_mise_cache"
+  fi
+  source "$_mise_cache"
 fi
 {{- else }}
 # asdf 版本管理
@@ -238,8 +277,14 @@ function conda() {
     command conda "$@"
 }
 
-# zoxide
-eval "$(zoxide init zsh)"
+# zoxide（快取 init script）
+if command -v zoxide &>/dev/null; then
+  _zoxide_cache="${_zsh_cache_dir}/zoxide_init.zsh"
+  if [[ ! -f "$_zoxide_cache" || "$(command -v zoxide)" -nt "$_zoxide_cache" ]]; then
+    zoxide init zsh > "$_zoxide_cache"
+  fi
+  source "$_zoxide_cache"
+fi
 
 export EDITOR="code"
 
