@@ -61,14 +61,8 @@ log_title "🖥  macOS Bootstrap — chezmoi + iCloud"
 echo "Repository: $REPO_URL"
 echo ""
 
-# ===== sudo keep-alive（選用）=====
-# 拿不到 sudo 就繼續：brew formulae 與使用者層設定不需要管理員權限，
-# 只有 Homebrew 首次安裝與部分 Cask 會受影響
-if sudo -v 2>/dev/null; then
-    while true; do sudo -n true; sleep 60; kill -0 "$$" 2>/dev/null || exit; done &
-else
-    log_info "⚠ 無 sudo 權限，繼續執行；Homebrew 首次安裝與部分 Cask 可能失敗"
-fi
+# 不主動要 sudo：整個流程皆為使用者層操作；
+# 唯一例外是 Homebrew 首次安裝（官方安裝器需要管理員權限，會自行提示）
 
 # ===== Step 1: Xcode Command Line Tools =====
 if [[ "$ICLOUD_ONLY" != true ]]; then
