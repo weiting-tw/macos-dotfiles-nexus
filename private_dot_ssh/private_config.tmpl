@@ -1,4 +1,12 @@
 # 機器特定的 Host 設定（不受 chezmoi 管理）
+{{- if .is_work }}
+
+# 修正 Orca 寫的 IdentitiesOnly yes（會擋掉 Bitwarden agent 的 key）。
+# 須放在 Include 之前：ssh 對 IdentitiesOnly 取「第一個」值，這裡先設 no 即勝出。
+Host Azure-Elsa-VM CS-BizForm-CI
+    IdentitiesOnly no
+{{- end }}
+
 Include config.d/*
 
 # ===== 全域：Bitwarden SSH Agent =====

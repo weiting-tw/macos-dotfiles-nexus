@@ -37,3 +37,6 @@ log/
 
 # firecrawl
 .firecrawl
+
+# superset
+.superset

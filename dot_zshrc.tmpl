@@ -12,7 +12,9 @@ ZSH_THEME="af-magic"
 # 效能優化：預設變數，跳過 use-omz 內的慢操作
 DISABLE_AUTO_UPDATE=true                         # 跳過 OMZ 更新檢查 (~0.4s)
 SHORT_HOST="${HOST%%.*}"                         # 跳過 scutil --get LocalHostName (~0.86s)
-export ZSH="$HOME/Library/Caches/antidote/https-COLON--SLASH--SLASH-github.com-SLASH-ohmyzsh-SLASH-ohmyzsh"
+export ZSH="$HOME/Library/Caches/antidote/github.com/ohmyzsh/ohmyzsh"
+# 預載 prompt_info_functions，避免 use-omz lazy-loader 在 $ZSH 路徑有誤時觸發錯誤
+source "$ZSH/lib/prompt_info_functions.zsh" 2>/dev/null
 
 # 直接 source 預編譯 bundle，只在 plugins.txt 更新時重建（跳過 antidote wrapper ~2.4s）
 _antidote_bundle="${HOME}/.zsh_plugins.zsh"
@@ -315,3 +317,6 @@ export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
 export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 #uv
 export PATH="$HOME/.local/bin:$PATH"
+
+# Added by Antigravity IDE
+export PATH="$HOME/.antigravity-ide/antigravity-ide/bin:$PATH"
