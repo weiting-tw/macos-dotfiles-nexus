@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -n \"$MEMORY_VAULT_PATH\" ] && [ -d \"$MEMORY_VAULT_PATH\" ] && bash \"$MEMORY_VAULT_PATH/scripts/hooks/on-message-start.sh\" || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -n \"$MEMORY_VAULT_PATH\" ] && [ -d \"$MEMORY_VAULT_PATH\" ] && bash \"$MEMORY_VAULT_PATH/scripts/hooks/on-message-end.sh\" || true"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -x \"$HOME/.superset/hooks/notify.sh\" ] && SUPERSET_AGENT_ID=codex \"$HOME/.superset/hooks/notify.sh\" || true"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -x \"$HOME/.superset/hooks/notify.sh\" ] && SUPERSET_AGENT_ID=codex \"$HOME/.superset/hooks/notify.sh\" || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -x \"$HOME/.superset/hooks/notify.sh\" ] && SUPERSET_AGENT_ID=codex \"$HOME/.superset/hooks/notify.sh\" || true"
+          }
+        ]
+      }
+    ]
+  }
+}
