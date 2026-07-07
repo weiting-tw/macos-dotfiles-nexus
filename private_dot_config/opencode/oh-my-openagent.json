@@ -2,9 +2,9 @@
   "google_auth": false,
   "agents": {
     "sisyphus": {
-      "model": "gss/vertex_ai/claude-opus-4-6"
+      "model": "azure/gpt-5.5"
     },
-    "Hephaestus": {
+    "hephaestus": {
       "model": "azure/gpt-5.4-pro"
     },
     "prometheus": {
@@ -37,13 +37,13 @@
       "model": "azure/gpt-5.4-pro"
     },
     "unspecified-high": {
-      "model": "gss/vertex_ai/claude-opus-4-6"
+      "model": "azure/gpt-5.5"
     },
     "deep": {
-      "model": "gpt-5.4-pro"
+      "model": "azure/gpt-5.4-pro"
     },
     "quick": {
-      "model": "gemini-3.1-flash-lite-preview"
+      "model": "gss/gemini-3.1-flash-lite-preview"
     }
   }
 }
