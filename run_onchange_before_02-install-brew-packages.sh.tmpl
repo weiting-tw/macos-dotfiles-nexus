@@ -87,8 +87,7 @@ echo "✓ Base packages installed"
 {{- if index . "has_docker" }}
 # ===== Docker packages =====
 brew bundle --file=/dev/stdin <<'DOCKERBREW'
-brew "docker"
-brew "docker-completion"
+brew "docker"   # 已內建 completion，勿另裝 docker-completion（會衝突）
 DOCKERBREW
 echo "✓ Docker packages installed"
 {{- end }}
