@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # Claude Desktop config merger (chezmoi modify_ script)
 #
-# 策略：
-# - 共用區塊（mcpServers、使用者偏好）由這份腳本覆蓋
-# - 機器特定 key（dispatchTrustedCodeWorkspaces、chromeExtension.*）保留現有值
-# - Claude Desktop runtime 寫入的機器特定狀態不會被吃掉
+# 策略（現有值優先，模板只補預設）：
+# - preferences 等現有 key 一律保留（GUI 調整的偏好不被 apply 回滾），
+#   模板值只在 key 不存在時作為預設
+# - mcpServers 例外：模板定義的 server 以模板為準（API key 來自 ~/.secrets），
+#   使用者自行加的 server 保留
+# - 機器特定 key（dispatchTrustedCodeWorkspaces、chromeExtension.*）與
+#   runtime 狀態原樣保留
 #
 # chezmoi 執行時：stdin = 當前 claude_desktop_config.json 內容，stdout = 新內容
 
@@ -59,6 +62,6 @@ DESIRED=$(jq -n \
       }
     }')
 
-# 遞迴 merge：$DESIRED 的 key 會覆蓋 CURRENT，CURRENT 獨有的 key（例如
-# dispatchTrustedCodeWorkspaces、chromeExtension.pairedDeviceId）原樣保留
-echo "$CURRENT" | jq --argjson d "$DESIRED" '. * $d'
+# 遞迴 merge：現有值優先（$d * . 讓 CURRENT 覆蓋 $DESIRED），
+# 再讓模板定義的 mcpServers 反向勝出
+echo "$CURRENT" | jq --argjson d "$DESIRED" '($d * .) | .mcpServers = (.mcpServers * $d.mcpServers)'
