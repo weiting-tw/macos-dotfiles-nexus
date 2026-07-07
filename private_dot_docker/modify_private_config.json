@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Docker config merger (chezmoi modify_ script)
+#
+# 策略（現有值優先，模板只補預設）：
+# - Docker runtime 會寫入 auths（login tokens）、plugins 等狀態，一律保留
+# - credsStore / currentContext 只在 key 不存在時提供預設
+#
+# chezmoi 執行時：stdin = 當前 ~/.docker/config.json 內容，stdout = 新內容
+
+set -euo pipefail
+
+command -v jq >/dev/null || { cat; exit 0; }
+
+CURRENT=$(cat)
+[[ -z "$CURRENT" ]] && CURRENT='{}'
+
+echo "$CURRENT" | jq '{
+  credsStore: "osxkeychain",
+  currentContext: "orbstack"
+} * .'
