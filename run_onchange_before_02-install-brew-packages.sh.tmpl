@@ -3,14 +3,23 @@
 # Install Homebrew and packages (re-runs when this script changes)
 set -euo pipefail
 
-# ===== sudo keep-alive（Cask 安裝需要）=====
-if ! sudo -n true 2>/dev/null; then
-    echo "需要 sudo 權限安裝 Cask 應用..."
-    sudo -v
+# ===== sudo keep-alive（選用；只有部分 Cask 的 pkg 安裝器需要）=====
+# 拿不到 sudo（非管理員帳號、或無 TTY 可輸入密碼）就跳過並繼續，
+# 不讓整個 chezmoi apply 因此中止
+SUDO_OK=false
+if sudo -n true 2>/dev/null; then
+    SUDO_OK=true
+elif [[ -t 0 ]]; then
+    echo "嘗試取得 sudo 權限（部分 Cask 安裝需要，直接 Enter 可跳過）..."
+    sudo -v 2>/dev/null && SUDO_OK=true
 fi
-while true; do sudo -n true; sleep 60; kill -0 "$$" 2>/dev/null || exit; done &
-SUDO_KEEPALIVE_PID=$!
-trap "kill $SUDO_KEEPALIVE_PID 2>/dev/null" EXIT
+if [[ "$SUDO_OK" == true ]]; then
+    while true; do sudo -n true; sleep 60; kill -0 "$$" 2>/dev/null || exit; done &
+    SUDO_KEEPALIVE_PID=$!
+    trap "kill $SUDO_KEEPALIVE_PID 2>/dev/null" EXIT
+else
+    echo "⚠ 無 sudo 權限，繼續安裝；需要管理員權限的 Cask 可能失敗，可稍後手動補裝"
+fi
 
 # ===== Install Homebrew =====
 if ! command -v brew &>/dev/null; then
