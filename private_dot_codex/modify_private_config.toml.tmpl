@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# Codex config merger (chezmoi modify_ script)
+#
+# 策略（現有檔案優先，模板只補管理範圍）：
+# - 頂層 keys：整塊保留現有內容含註解（sandbox_mode/approval_policy/notify/
+#   model 等 Codex runtime 與安裝器會直接改寫），檔案不存在時才用模板預設
+# - 模板完全接管：profiles / model_providers / sandbox_workspace_write /
+#   shell_environment_policy
+# - [features]：現有優先（runtime 會寫入 flags），不存在才用模板預設
+# - [mcp_servers.*]：模板定義的 server 以模板為準，其餘（codex mcp add 加的）保留
+# - 其他 sections（projects/notice/tui/hooks/marketplaces/desktop/plugins…）
+#   一律保留，未知的 runtime sections 才不會在 apply 時丟失
+#
+# 重要：保留區直接切「原始文字」，不經 dasel 重寫。dasel 規範化會把 key 的
+# 雙引號改成單引號，Orca 等工具用字面字串比對合併 config 時會認不出同一個
+# key 而重複附加，造成 duplicate key 解析錯誤。dasel 只用來驗證檔案可解析。
+# 限制：section 標頭判定用「行首 [、不含逗號、以 ] 結尾」啟發式；Codex 寫入
+# 的 inline array 不會誤判，手寫多行陣列且元素獨佔一行以 [ 開頭時例外。
+#
+# chezmoi 執行時：stdin = 當前 ~/.codex/config.toml 內容，stdout = 新內容
+
+set -euo pipefail
+
+# 沒裝 dasel 就吐回原檔不動（讓 brew 安裝階段先補上，下次 apply 才生效）
+command -v dasel >/dev/null || { cat; exit 0; }
+
+CURRENT=$(cat)
+
+# 模板內容（chezmoi template 已先渲染）
+DESIRED=$(cat <<'TOML'
+{{- if not (env "AZURE_OPENAI_ENDPOINT") }}
+preferred_auth_method = "chatgpt"
+forced_login_method = "chatgpt"
+{{- end }}
+
+{{ template "codex-base.toml" . }}
+
+[features]
+goals = true
+
+## mcp
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+env = { "CONTEXT7_API_KEY" = "{{ env "CONTEXT7_API_KEY" }}" }
+
+[mcp_servers.gemini]
+command = "npx"
+args = ["-y", "gemini-mcp-tool@latest"]
+
+[mcp_servers.pencil]
+command = "/Applications/Pencil.app/Contents/Resources/app.asar.unpacked/out/mcp-server-darwin-arm64"
+args = ["--app", "desktop"]
+TOML
+)
+
+# 新機器（無現有檔案）：直接用模板
+if [[ -z "$CURRENT" ]]; then
+  printf '%s\n' "$DESIRED"
+  exit 0
+fi
+
+# 現有檔案解析失敗就原樣吐回，避免弄丟內容（dasel 僅驗證，不重寫）
+printf '%s\n' "$CURRENT" | dasel -i toml -o toml '' >/dev/null 2>&1 \
+  || { printf '%s\n' "$CURRENT"; exit 0; }
+
+# 1) 頂層 keys：第一個 [section] 前的原始內容（保留註解與格式）
+TOP=$(printf '%s\n' "$CURRENT" | awk '/^\[[^,]*\][[:space:]]*$/ { exit } { print }')
+
+HAS_FEATURES=0
+if printf '%s\n' "$CURRENT" | grep -qE '^\[features\][[:space:]]*$'; then
+  HAS_FEATURES=1
+fi
+
+# 模板定義的 mcp server 名稱
+TEMPLATE_MCP=$(printf '%s\n' "$DESIRED" | sed -nE 's/^\[mcp_servers\.([^]]+)\]$/\1/p' | tr '\n' ' ')
+
+# 2) 現有 sections：丟掉模板接管的，其餘保留原始文字
+PRESERVED=$(printf '%s\n' "$CURRENT" | awk -v tmcp="$TEMPLATE_MCP" '
+  BEGIN { n = split(tmcp, a, " "); for (i = 1; i <= n; i++) if (a[i] != "") tpl[a[i]] = 1 }
+  /^\[[^,]*\][[:space:]]*$/ {
+    inbody = 1
+    keep = 1
+    if ($0 ~ /^\[(profiles|model_providers|sandbox_workspace_write|shell_environment_policy)([.\]])/) keep = 0
+    if ($0 ~ /^\[mcp_servers[.\]]/) {
+      # 取第一段名稱：[mcp_servers.context7.env] 也算 context7
+      name = $0
+      sub(/^\[mcp_servers\.?/, "", name); sub(/[\].].*/, "", name)
+      if (name == "" || name in tpl) keep = 0
+    }
+  }
+  inbody && keep
+')
+
+# 3) 模板 sections（去掉頂層；現有已有 [features] 時沿用現有的）
+DESIRED_SECTIONS=$(printf '%s\n' "$DESIRED" | awk -v hasfeat="$HAS_FEATURES" '
+  /^\[/ {
+    inbody = 1
+    keep = 1
+    if (hasfeat == 1 && $0 ~ /^\[features\]$/) keep = 0
+  }
+  inbody && keep
+')
+
+printf '%s\n\n' "$TOP"
+printf '%s\n' "$DESIRED_SECTIONS"
+if [[ -n "$PRESERVED" ]]; then
+  printf '\n%s\n' "$PRESERVED"
+fi
