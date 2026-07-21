@@ -1,0 +1,3 @@
+{{- if env "AZURE_OPENAI_ENDPOINT" -}}
+{{ template "codex-profiles.toml" . }}
+{{- end -}}

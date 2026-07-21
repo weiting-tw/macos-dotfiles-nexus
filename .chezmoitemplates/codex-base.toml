@@ -1,63 +1,16 @@
-profile="codex"
+{{- if env "AZURE_OPENAI_ENDPOINT" }}
+# 預設模型（Codex CLI 0.144+ 不支援 config.toml 內的 profile selector，
+# 改用頂層設定；具名 profiles 在 codex.config.toml，以 --profile <name> 選用）
+model_provider = "azure"
+model = "gpt-5.3-codex"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+{{- end }}
 
 # 可用選項："read-only" | "workspace-write" | "danger-full-access"
 # workspace-write：僅允許寫入工作目錄，較安全的預設值
 sandbox_mode = "workspace-write"
 approval_policy = "on-request" # "untrusted" or "on-request" or "never"
-
-[profiles.codex]
-model_provider = "azure"
-model = "gpt-5.3-codex"
-model_reasoning_effort = "high"
-model_reasoning_summary = "detailed"
-
-[profiles.codex-max]
-model_provider = "azure"
-model = "gpt-5.1-codex-max"
-model_reasoning_effort = "xhigh"
-model_reasoning_summary = "detailed"
-
-[profiles.codex-mini]
-model_provider = "azure"
-model = "gpt-5.1-codex-mini"
-model_reasoning_effort = "medium"
-model_reasoning_summary = "concise"
-
-[profiles."gpt-5.4"]
-model_provider = "azure"
-model = "gpt-5.4"
-model_reasoning_effort = "high"
-model_reasoning_summary = "detailed"
-
-[profiles."gpt-5.4-pro"]
-model_provider = "azure"
-model = "gpt-5.4-pro"
-model_reasoning_effort = "xhigh"
-model_reasoning_summary = "detailed"
-
-[profiles."gpt-5.4-mini"]
-model_provider = "azure"
-model = "gpt-5.4-mini"
-model_reasoning_effort = "medium"
-model_reasoning_summary = "concise"
-
-[profiles.o3]
-model_provider = "azure"
-model = "o3"
-model_reasoning_effort = "high"
-model_reasoning_summary = "detailed"
-
-[profiles.o3-pro]
-model_provider = "azure"
-model = "o3-pro"
-model_reasoning_effort = "xhigh"
-model_reasoning_summary = "detailed"
-
-[profiles.o4-mini]
-model_provider = "azure"
-model = "o4-mini"
-model_reasoning_effort = "medium"
-model_reasoning_summary = "concise"
 
 {{- if env "AZURE_OPENAI_ENDPOINT" }}
 [model_providers.azure]
@@ -73,8 +26,8 @@ wire_api = "responses"
 network_access = true
 
 {{- if env "AZURE_OPENAI_ENDPOINT" }}
+[shell_environment_policy]
 # Codex CLI sandbox 預設會過濾名稱含 KEY/SECRET/TOKEN 的環境變數
 # ignore_default_excludes = true 可停用此行為，確保 Azure API Key 能正常傳入
-[shell_environment_policy]
 ignore_default_excludes = true
 {{- end }}

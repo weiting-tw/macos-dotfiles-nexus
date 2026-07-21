@@ -1,6 +1,7 @@
 # Codex MCP wrapper 專用設定
-# 與 ~/.codex/config.toml 共用 profiles，但不載入 MCP servers
+# 與 ~/.codex/config.toml 共用基底設定，但不載入 MCP servers
 # 避免 wrapper model detection 的 5 秒超時問題
+# 具名 profiles 在同目錄 codex.config.toml
 
 {{ template "codex-base.toml" . }}
 

@@ -1,0 +1,55 @@
+# 具名 profiles（Codex CLI 0.144+ 要求放在 codex.config.toml，以 --profile <name> 選用）
+
+[profiles.codex]
+model_provider = "azure"
+model = "gpt-5.3-codex"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles.codex-max]
+model_provider = "azure"
+model = "gpt-5.1-codex-max"
+model_reasoning_effort = "xhigh"
+model_reasoning_summary = "detailed"
+
+[profiles.codex-mini]
+model_provider = "azure"
+model = "gpt-5.1-codex-mini"
+model_reasoning_effort = "medium"
+model_reasoning_summary = "concise"
+
+[profiles."gpt-5.4"]
+model_provider = "azure"
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles."gpt-5.4-pro"]
+model_provider = "azure"
+model = "gpt-5.4-pro"
+model_reasoning_effort = "xhigh"
+model_reasoning_summary = "detailed"
+
+[profiles."gpt-5.4-mini"]
+model_provider = "azure"
+model = "gpt-5.4-mini"
+model_reasoning_effort = "medium"
+model_reasoning_summary = "concise"
+
+[profiles.o3]
+model_provider = "azure"
+model = "o3"
+model_reasoning_effort = "high"
+model_reasoning_summary = "detailed"
+
+[profiles.o3-pro]
+model_provider = "azure"
+model = "o3-pro"
+model_reasoning_effort = "xhigh"
+model_reasoning_summary = "detailed"
+
+[profiles.o4-mini]
+model_provider = "azure"
+model = "o4-mini"
+model_reasoning_effort = "medium"
+model_reasoning_summary = "concise"

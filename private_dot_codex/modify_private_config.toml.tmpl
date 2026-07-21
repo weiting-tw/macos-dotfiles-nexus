@@ -4,9 +4,11 @@
 # 策略（現有檔案優先，模板只補管理範圍）：
 # - 頂層 keys：整塊保留現有內容含註解（sandbox_mode/approval_policy/notify/
 #   model 等 Codex runtime 與安裝器會直接改寫），檔案不存在時才用模板預設
-# - 模板完全接管：profiles / model_providers / sandbox_workspace_write /
-#   shell_environment_policy
-# - [features]：現有優先（runtime 會寫入 flags），不存在才用模板預設
+# - 模板完全接管：model_providers / sandbox_workspace_write
+# - [profiles.*]：一律移除——Codex CLI 0.144+ 不支援 config.toml 內的
+#   profiles，已遷移至 codex.config.toml（獨立 chezmoi target）
+# - [features] 與 [shell_environment_policy]：現有優先（runtime 與使用者
+#   會寫入 flags / .set 自訂變數），不存在才用模板預設
 # - [mcp_servers.*]：模板定義的 server 以模板為準，其餘（codex mcp add 加的）保留
 # - 其他 sections（projects/notice/tui/hooks/marketplaces/desktop/plugins…）
 #   一律保留，未知的 runtime sections 才不會在 apply 時丟失
@@ -77,6 +79,11 @@ if printf '%s\n' "$CURRENT" | grep -qE '^\[features\][[:space:]]*$'; then
   HAS_FEATURES=1
 fi
 
+HAS_SEP=0
+if printf '%s\n' "$CURRENT" | grep -qE '^\[shell_environment_policy\][[:space:]]*$'; then
+  HAS_SEP=1
+fi
+
 # 模板定義的 mcp server 名稱
 TEMPLATE_MCP=$(printf '%s\n' "$DESIRED" | sed -nE 's/^\[mcp_servers\.([^]]+)\]$/\1/p' | tr '\n' ' ')
 
@@ -86,7 +93,7 @@ PRESERVED=$(printf '%s\n' "$CURRENT" | awk -v tmcp="$TEMPLATE_MCP" '
   /^\[[^,]*\][[:space:]]*$/ {
     inbody = 1
     keep = 1
-    if ($0 ~ /^\[(profiles|model_providers|sandbox_workspace_write|shell_environment_policy)([.\]])/) keep = 0
+    if ($0 ~ /^\[(profiles|model_providers|sandbox_workspace_write)([.\]])/) keep = 0
     if ($0 ~ /^\[mcp_servers[.\]]/) {
       # 取第一段名稱：[mcp_servers.context7.env] 也算 context7
       name = $0
@@ -97,12 +104,14 @@ PRESERVED=$(printf '%s\n' "$CURRENT" | awk -v tmcp="$TEMPLATE_MCP" '
   inbody && keep
 ')
 
-# 3) 模板 sections（去掉頂層；現有已有 [features] 時沿用現有的）
-DESIRED_SECTIONS=$(printf '%s\n' "$DESIRED" | awk -v hasfeat="$HAS_FEATURES" '
+# 3) 模板 sections（去掉頂層；現有已有 [features]/[shell_environment_policy]
+#    時沿用現有的）
+DESIRED_SECTIONS=$(printf '%s\n' "$DESIRED" | awk -v hasfeat="$HAS_FEATURES" -v hassep="$HAS_SEP" '
   /^\[/ {
     inbody = 1
     keep = 1
     if (hasfeat == 1 && $0 ~ /^\[features\]$/) keep = 0
+    if (hassep == 1 && $0 ~ /^\[shell_environment_policy\]$/) keep = 0
   }
   inbody && keep
 ')
