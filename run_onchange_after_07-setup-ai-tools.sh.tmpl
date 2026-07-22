@@ -14,27 +14,33 @@ echo "✓ iCloud sync directory ready: $ICLOUD_DIR"
 
 # ===== Detect + Install AI tools =====
 install_if_missing() {
-    local name="$1" check="$2" install_cmd="$3"
-    if command -v "$check" &>/dev/null || [[ -d "$check" ]]; then
+    local name="$1" check="$2" install_cmd="$3" noninteractive_default="${4:-y}"
+    # App 檢查同時看 /Applications 與 ~/Applications（公司機 Cask 裝在後者）
+    if command -v "$check" &>/dev/null || [[ -d "$check" ]] || [[ -d "$HOME$check" ]]; then
         echo "✓ $name already installed"
     else
         if [[ -t 0 ]]; then
             read -p "Install $name? [y/N] " -n 1 -r
             echo
         else
-            REPLY="y"  # 非互動環境：自動安裝
+            # 非互動環境：CLI 工具自動安裝；大型 GUI 工具跳過（第 4 參數 n）
+            REPLY="$noninteractive_default"
         fi
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            eval "$install_cmd"
-            echo "✓ $name installed"
+            # 選用工具：安裝失敗只警告，不中止整個 chezmoi apply
+            if eval "$install_cmd"; then
+                echo "✓ $name installed"
+            else
+                echo "⚠ $name 安裝失敗，略過（可稍後手動安裝）"
+            fi
         else
             echo "⊘ $name skipped"
         fi
     fi
 }
 
-install_if_missing "Cursor"      "/Applications/Cursor.app"    "brew install --cask cursor"
-install_if_missing "Windsurf"    "/Applications/Windsurf.app"  "brew install --cask windsurf"
+install_if_missing "Cursor"      "/Applications/Cursor.app"    "brew install --cask cursor"   "n"
+install_if_missing "Windsurf"    "/Applications/Windsurf.app"  "brew install --cask windsurf" "n"
 install_if_missing "Claude Code" "claude"                       "npm install -g @anthropic-ai/claude-code"
 install_if_missing "Codex"       "codex"                        "npm install -g @openai/codex"
 install_if_missing "OpenCode"    "opencode"                     "brew install opencode"
