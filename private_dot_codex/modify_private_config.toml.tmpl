@@ -72,7 +72,9 @@ printf '%s\n' "$CURRENT" | dasel -i toml -o toml '' >/dev/null 2>&1 \
   || { printf '%s\n' "$CURRENT"; exit 0; }
 
 # 1) 頂層 keys：第一個 [section] 前的原始內容（保留註解與格式）
-TOP=$(printf '%s\n' "$CURRENT" | awk '/^\[[^,]*\][[:space:]]*$/ { exit } { print }')
+#    唯一例外：legacy 頂層 profile 選擇器一併移除（Codex CLI 0.144+ 拒絕啟動）
+TOP=$(printf '%s\n' "$CURRENT" | awk '/^\[[^,]*\][[:space:]]*$/ { exit } { print }' \
+  | grep -vE '^profile[[:space:]]*=' || true)
 
 HAS_FEATURES=0
 if printf '%s\n' "$CURRENT" | grep -qE '^\[features\][[:space:]]*$'; then
