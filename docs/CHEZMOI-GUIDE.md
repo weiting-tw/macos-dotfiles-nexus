@@ -109,19 +109,30 @@ chezmoi/                          # chezmoi source directory
 │   └── gpg-agent.conf
 │
 ├── private_dot_docker/           # → ~/.docker/
-│   └── config.json
+│   └── modify_private_config.json      # modify_ 合併，保留 docker login 寫入的 auths
 │
 ├── private_dot_codex/            # → ~/.codex/
-│   └── config.toml.tmpl          # Codex config（含 API key template）
+│   ├── modify_private_config.toml.tmpl # Codex config（modify_ 合併，現有值優先）
+│   ├── codex.config.toml.tmpl          # 具名 profiles（Codex CLI 0.144+ 格式）
+│   └── hooks.json                      # Codex hooks 設定
+│
+├── private_dot_codex-mcp/        # → ~/.codex-mcp/
+│   ├── config.toml.tmpl                # MCP wrapper 設定（不含 MCP servers，避免逾時）
+│   └── codex.config.toml.tmpl          # wrapper 具名 profiles
+│
+├── .chezmoitemplates/             # 共用 template 片段（本身不產生目標檔案）
+│   ├── codex-base.toml
+│   └── codex-profiles.toml
 │
 ├── private_dot_config/           # → ~/.config/
 │   └── opencode/
-│       └── opencode.json.tmpl    # OpenCode config（含 API key template）
+│       ├── opencode.json               # OpenCode 設定（靜態 JSON）
+│       └── oh-my-openagent.json         # OpenCode plugin 設定（靜態 JSON）
 │
 ├── Library/
 │   └── Application Support/
 │       └── Claude/
-│           └── claude_desktop_config.json.tmpl  # Claude Desktop MCP config
+│           └── modify_private_claude_desktop_config.json  # Claude Desktop MCP config（modify_ 合併）
 │
 ├── run_once_before_01-install-xcode-tools.sh           # Xcode CLI Tools
 ├── run_onchange_before_02-install-brew-packages.sh.tmpl # Homebrew + Brewfile + mise
@@ -130,11 +141,13 @@ chezmoi/                          # chezmoi source directory
 ├── run_once_after_05-setup-ssh.sh.tmpl                  # SSH + Bitwarden
 ├── run_onchange_after_06-configure-macos.sh.tmpl        # macOS defaults
 ├── run_onchange_after_07-setup-ai-tools.sh.tmpl         # AI tools + iCloud（需 has_ai_tools）
+├── run_onchange_after_08-setup-mcp.sh.tmpl              # MCP 設定同步至 ~/.claude.json
 ├── run_once_after_09-setup-launchd.sh.tmpl              # Auto-sync agents（含失敗通知）
 │
 ├── scripts/                      # 輔助腳本（不被 chezmoi apply）
 │   ├── icloud-sync.sh            # iCloud 雙向同步
 │   ├── seed-icloud.sh            # 首次 iCloud 初始化
+│   ├── sync-mcp.sh               # MCP 設定同步至 ~/.claude.json
 │   └── icloud-capture.plist.tmpl # LaunchAgent 模板
 │
 ├── hosts/                        # 機器特定覆寫
@@ -165,8 +178,8 @@ chezmoi/                          # chezmoi source directory
 |------|------------|------|
 | Claude agents/*.md | dotfiles-shared/claude/agents/ | AI agent 定義 |
 | Claude settings.json | dotfiles-shared/claude/settings.json | Claude Code 偏好 |
-| OpenCode oh-my-opencode.json | dotfiles-shared/opencode/ | OpenCode 插件設定 |
 | OpenCode agent/*.md | dotfiles-shared/opencode/agent/ | Agent 定義 |
+| OpenCode plugin/、superpowers/ | dotfiles-shared/opencode/ | OpenCode 插件（`opencode.json`／`oh-my-openagent.json` 改由 chezmoi 管理，不走 iCloud） |
 | VS Code extensions.txt | dotfiles-shared/vscode/ | 擴充套件清單 |
 | iTerm2 preferences | dotfiles-shared/iterm2/ | iTerm2 設定（自動讀寫） |
 | Brewfile.snapshot | dotfiles-shared/ | 自動 dump 的套件快照 |
@@ -389,7 +402,7 @@ icloud-sync.sh capture
 
 # 檢查 symlinks
 ls -la ~/.claude/agents
-ls -la ~/.config/opencode/oh-my-opencode.json
+ls -la ~/.config/opencode/agent
 ```
 
 ### Bitwarden SSH Agent 未偵測到
