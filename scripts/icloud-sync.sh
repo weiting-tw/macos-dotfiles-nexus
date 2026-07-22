@@ -224,6 +224,17 @@ check_icloud_ready() {
 }
 
 # ===== 衝突檢查 =====
+# 取檔案 mtime；目錄取其中最新檔案的 mtime
+newest_mtime() {
+    local path="$1" m=""
+    if [[ -d "$path" ]]; then
+        m=$(find "$path" -type f -exec stat -f '%m' {} + 2>/dev/null | sort -rn | head -1 || true)
+    else
+        m=$(stat -f '%m' "$path" 2>/dev/null || true)
+    fi
+    echo "${m:-0}"
+}
+
 check_conflict() {
     local local_path="$1"
     local icloud_path="$2"
@@ -237,9 +248,11 @@ check_conflict() {
         return 0  # iCloud 不存在，無衝突
     fi
 
+    # 目錄取其中最新檔案的 mtime——目錄本身的 mtime 不反映子檔就地修改，
+    # 會漏判 iCloud 端較新的內容而被 rsync --delete 覆蓋
     local local_mtime icloud_mtime
-    local_mtime=$(stat -f '%m' "$local_path" 2>/dev/null || echo 0)
-    icloud_mtime=$(stat -f '%m' "$icloud_path" 2>/dev/null || echo 0)
+    local_mtime=$(newest_mtime "$local_path")
+    icloud_mtime=$(newest_mtime "$icloud_path")
 
     if [[ "$icloud_mtime" -gt "$local_mtime" ]]; then
         log_warn "衝突: $name iCloud 版本較新 (iCloud: $(date -r "$icloud_mtime" '+%Y-%m-%d %H:%M'), 本地: $(date -r "$local_mtime" '+%Y-%m-%d %H:%M'))"

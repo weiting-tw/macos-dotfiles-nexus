@@ -37,11 +37,7 @@ if [[ -d "$HOME/.codex/skills" ]] && [[ ! -L "$HOME/.codex/skills" ]]; then
 fi
 
 # OpenCode non-sensitive
-if [[ -f "$HOME/.config/opencode/oh-my-opencode.json" ]] && [[ ! -L "$HOME/.config/opencode/oh-my-opencode.json" ]]; then
-    cp "$HOME/.config/opencode/oh-my-opencode.json" "$ICLOUD_DIR/opencode/oh-my-opencode.json"
-    log_ok "OpenCode oh-my-opencode.json → iCloud"
-fi
-
+# （opencode.json / oh-my-openagent.json 由 chezmoi 管理，不走 iCloud）
 if [[ -d "$HOME/.config/opencode/agent" ]] && [[ ! -L "$HOME/.config/opencode/agent" ]]; then
     cp -R "$HOME/.config/opencode/agent/"* "$ICLOUD_DIR/opencode/agent/" 2>/dev/null || true
     log_ok "OpenCode agents → iCloud"

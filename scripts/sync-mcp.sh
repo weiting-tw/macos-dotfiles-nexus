@@ -48,7 +48,8 @@ fi
 
 # ===== 渲染模板 =====
 # 先收集模板中實際出現的變數名稱，再用 envsubst 限定展開（避免誤展開不相關字串）
-VARS_IN_TEMPLATE=$(grep -oE '\$\{[A-Za-z_][A-Za-z0-9_]*\}' "$ICLOUD_MCP" | sort -u | tr '\n' ' ')
+# || true：模板不含任何 ${VAR} 時 grep 回非零，避免 pipefail 提前中止
+VARS_IN_TEMPLATE=$(grep -oE '\$\{[A-Za-z_][A-Za-z0-9_]*\}' "$ICLOUD_MCP" | sort -u | tr '\n' ' ' || true)
 log_info "模板需要的變數: ${VARS_IN_TEMPLATE:-（無）}"
 
 RENDERED=$(envsubst "$VARS_IN_TEMPLATE" < "$ICLOUD_MCP")
