@@ -1,5 +1,6 @@
-default-cache-ttl 0
-max-cache-ttl 600
+# 快取放寬：減少 pinentry 輸入頻率（本機實際使用偏好）
+default-cache-ttl 3600
+max-cache-ttl 7200
 default-cache-ttl-ssh 0
 max-cache-ttl-ssh 0
 {{- if env "GPG_DEFAULT_KEY" }}
