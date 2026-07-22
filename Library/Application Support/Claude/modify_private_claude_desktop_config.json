@@ -28,6 +28,12 @@ fi
 CURRENT=$(cat)
 [[ -z "$CURRENT" ]] && CURRENT='{}'
 
+# 既有檔解析失敗（半寫入/畸形 JSON）就原樣吐回，避免弄丟內容
+if ! printf '%s' "$CURRENT" | jq empty 2>/dev/null; then
+    printf '%s' "$CURRENT"
+    exit 0
+fi
+
 # 共用區塊
 DESIRED=$(jq -n \
     --arg perplexity_key "${PERPLEXITY_API_KEY:-}" \
@@ -63,5 +69,5 @@ DESIRED=$(jq -n \
     }')
 
 # 遞迴 merge：現有值優先（$d * . 讓 CURRENT 覆蓋 $DESIRED），
-# 再讓模板定義的 mcpServers 反向勝出
-echo "$CURRENT" | jq --argjson d "$DESIRED" '($d * .) | .mcpServers = (.mcpServers * $d.mcpServers)'
+# 再讓模板定義的 mcpServers 反向勝出（// {} 防既有 mcpServers 為 null）
+echo "$CURRENT" | jq --argjson d "$DESIRED" '($d * .) | .mcpServers = ((.mcpServers // {}) * $d.mcpServers)'

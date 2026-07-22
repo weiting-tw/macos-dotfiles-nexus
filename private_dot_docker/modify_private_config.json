@@ -14,6 +14,12 @@ command -v jq >/dev/null || { cat; exit 0; }
 CURRENT=$(cat)
 [[ -z "$CURRENT" ]] && CURRENT='{}'
 
+# 既有檔解析失敗就原樣吐回，避免弄丟內容
+if ! printf '%s' "$CURRENT" | jq empty 2>/dev/null; then
+    printf '%s' "$CURRENT"
+    exit 0
+fi
+
 echo "$CURRENT" | jq '{
   credsStore: "osxkeychain",
   currentContext: "orbstack"
