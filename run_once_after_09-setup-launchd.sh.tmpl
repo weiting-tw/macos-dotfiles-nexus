@@ -24,17 +24,20 @@ cat > "$CHEZMOI_PLIST" << PLIST
         <string>/bin/bash</string>
         <string>-c</string>
         <string>/bin/bash -c '
+# launchd 環境沒有使用者 shell env：補 Homebrew PATH（dasel/git 等），
+# 並載入 ~/.secrets（模板依賴 AZURE_OPENAI_ENDPOINT 等變數判斷渲染分支，
+# 缺少時會產出錯誤設定）
+export PATH="/opt/homebrew/bin:/usr/local/bin:\$PATH"
+if [ -f "\$HOME/.secrets" ]; then
+  set -a; . "\$HOME/.secrets"; set +a
+fi
 LOGFILE="${LOG_DIR}/chezmoi-update.out.log"
-${CHEZMOI_BIN} update --no-tty 2&gt;&amp;1
+# --force：易變設定檔皆走 modify_ 現有優先合併，直接覆寫是安全的；
+# 否則 --no-tty 下遇「檔案已被外部修改」提示會 EOF 中止
+${CHEZMOI_BIN} update --force --no-tty 2&gt;&amp;1
 EC=\$?
 if [ \$EC -ne 0 ]; then
-  CF=\$(grep "has changed since chezmoi last wrote it" "\$LOGFILE" 2&gt;/dev/null | sed "s/ has changed.*//" | sort -u | head -3)
-  if [ -n "\$CF" ]; then
-    MSG="檔案衝突: \$CF. 請執行: chezmoi diff 查看差異, chezmoi apply --force 強制覆蓋"
-  else
-    MSG="更新失敗，請查看 \$LOGFILE"
-  fi
-  osascript -e "display notification \"\$MSG\" with title \"Dotfiles Sync\" subtitle \"chezmoi update 失敗\""
+  osascript -e "display notification \"更新失敗，請查看 \$LOGFILE\" with title \"Dotfiles Sync\" subtitle \"chezmoi update 失敗\""
 fi
 exit \$EC
 '</string>
