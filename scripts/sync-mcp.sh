@@ -52,6 +52,18 @@ fi
 VARS_IN_TEMPLATE=$(grep -oE '\$\{[A-Za-z_][A-Za-z0-9_]*\}' "$ICLOUD_MCP" | sort -u | tr '\n' ' ' || true)
 log_info "模板需要的變數: ${VARS_IN_TEMPLATE:-（無）}"
 
+# 渲染前檢查變數是否為空。涵蓋 args/url 等 env、headers 以外的位置
+# （例如 kitesurf 的 --wsEndpoint 把 account ID 嵌在字串中間，事後掃 JSON 看不出缺漏）
+EMPTY_VARS=""
+for var in $VARS_IN_TEMPLATE; do
+    name="${var#\$\{}"; name="${name%\}}"
+    [[ -z "${!name:-}" ]] && EMPTY_VARS+="    $name"$'\n'
+done
+if [[ -n "$EMPTY_VARS" ]]; then
+    log_warn "以下變數未設定（$SECRETS_FILE 可能缺 export），渲染後會是空字串:"
+    printf '%s' "$EMPTY_VARS" >&2
+fi
+
 RENDERED=$(envsubst "$VARS_IN_TEMPLATE" < "$ICLOUD_MCP")
 
 # 驗證是 JSON
@@ -103,16 +115,3 @@ chmod 600 "$CLAUDE_JSON"
 
 COUNT=$(echo "$NEW_MCP" | jq '.mcpServers | length')
 log_ok "已更新 ~/.claude.json（$COUNT 個 MCP servers）"
-
-# 檢查有沒有變數沒被設到（渲染後出現空字串 env）
-EMPTY_VARS=$(echo "$NEW_MCP" | jq -r '
-  .mcpServers | to_entries[] |
-  . as $s |
-  (.value.env // {}) + (.value.headers // {}) |
-  to_entries[] | select(.value == "") |
-  "\($s.key): \(.key)"
-')
-if [[ -n "$EMPTY_VARS" ]]; then
-    log_warn "以下欄位為空（~/.secrets 可能缺 export）:"
-    echo "$EMPTY_VARS" | sed 's/^/    /'
-fi
