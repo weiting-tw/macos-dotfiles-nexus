@@ -27,6 +27,9 @@ ssh/
 .config/opencode/antigravity-accounts.json
 .config/opencode/node_modules
 
+# Codex hooks（Orca 等第三方工具會寫入，交由各機器自行管理）
+.codex/hooks.json
+
 # OS-specific ignores
 {{- if ne .chezmoi.os "darwin" }}
 Library/
