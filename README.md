@@ -314,7 +314,7 @@ chezmoi apply                                    # 套用變更
 | `PERPLEXITY_API_KEY` | Perplexity MCP |
 | `CONTEXT7_API_KEY` | Context7 MCP |
 | `AZURE_OPENAI_ENDPOINT` | Codex Azure Provider |
-| `OPENAI_API_KEY_app_mfv8vy68` | Codex Azure API Key |
+| `CODEX_AZURE_OPENAI_API_KEY` | Codex Azure API Key（需與 AZURE_OPENAI_ENDPOINT 同一 resource）|
 | `GPG_SIGNING_KEY` | Git commit 簽名密鑰 ID |
 
 ## License

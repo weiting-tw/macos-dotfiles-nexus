@@ -16,7 +16,7 @@ approval_policy = "on-request" # "untrusted" or "on-request" or "never"
 [model_providers.azure]
 name = "Azure"
 base_url= "{{ env "AZURE_OPENAI_ENDPOINT" }}"
-env_key = "OPENAI_API_KEY_app_mfv8vy68"
+env_key = "CODEX_AZURE_OPENAI_API_KEY"
 
 query_params = { api-version = "2025-04-01-preview" }
 wire_api = "responses"
